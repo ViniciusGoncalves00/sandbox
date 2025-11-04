@@ -1,27 +1,32 @@
-import { MathUtils, VectorUtils } from "@viniciusgoncalves/ts-utils";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-import { lerp, randFloat, seededRandom } from "three/src/math/MathUtils.js";
-import { BufferAttribute, BufferGeometry, DoubleSide, Float32BufferAttribute, LinearInterpolant, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene, SphereGeometry, Vector3, WebGPURenderer } from "three/webgpu";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { WebGPURenderer } from "three/webgpu";
+import { Grid } from "./grid";
+import { MathUtils } from "@viniciusgoncalves/ts-utils";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const scene = new Scene();
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0, 0, 0);
 
-const camera = new PerspectiveCamera(
-	75,
-	window.innerWidth / window.innerHeight,
-	0.1,
-	1000
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
 );
-camera.position.x = 5;
-camera.position.y = 5;
-camera.position.z = 5;
+
+camera.position.z = -5;
 camera.lookAt(0, 0, 0);
+camera.rotateZ(MathUtils.deg2rad(-90));
 
 const renderer = new WebGPURenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-const controls = new OrbitControls( camera, renderer.domElement );
+window.addEventListener("resize", onResizeWindow);
+
+function onResizeWindow() {
+	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+}
 
 function animate() {
   renderer.renderAsync(scene, camera);
@@ -30,166 +35,70 @@ function animate() {
 
 animate();
 
+const lookupTable: Map<number, [number, number][]> = new Map([
+        [0, []],                // 0000
+        [1, [[0, 3]]],          // 0001
+        [2, [[0, 1]]],          // 0010
+        [3, [[1, 3]]],          // 0011
+        [4, [[1, 2]]],          // 0100
+        [5, [[0, 1], [2, 3]]],  // 0101
+        [6, [[0, 2]]],          // 0110
+        [7, [[2, 3]]],          // 0111
+        [8, [[2, 3]]],          // 1000
+        [9, [[0, 2]]],          // 1001
+        [10, [[0, 3], [1, 2]]], // 1010
+        [11, [[1, 2]]],         // 1011
+        [12, [[1, 3]]],         // 1100
+        [13, [[0, 1]]],         // 1101
+        [14, [[0, 3]]],         // 1110
+        [15, []]                // 1111
+    ]
+);
 
-class MarchingSquare {
-    // mesh parameters
-    public threshold = 0.5;
-    public lowerValue = 0.0;
-    public higherValue = 1.0;
+const materialSelected = new THREE.MeshBasicMaterial( { color: new THREE.Color(0.9, 0.9, 0.9)});
+const materialUnselected = new THREE.MeshBasicMaterial( { color: new THREE.Color(0.1, 0.1, 0.1)});
+
+const forward = new THREE.Vector3();
+camera.getWorldDirection(forward);
+
+const raycaster = new THREE.Raycaster(camera.position, forward);
+
+canvas.addEventListener("click", (event: MouseEvent) => {
+    const rect = canvas.getBoundingClientRect();
+
+    const normalized_coordinates = new THREE.Vector2();
+    normalized_coordinates.x = ((event.x - rect.left) / rect.width) * 2 - 1;
+    normalized_coordinates.y = -((event.y - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(new THREE.Vector2(normalized_coordinates.x, normalized_coordinates.y), camera);
+
+    const intersections = raycaster.intersectObjects(scene.children);
+    if (!intersections || intersections.length === 0) {
+        return
+    }
+
+    const object = intersections[0].object as THREE.Mesh;
+
+    if(object.userData.use) {
+        object.userData.use = false;
+        object.material = materialUnselected;
+    } else {
+        object.userData.use = true;
+        object.material = materialSelected;
+    }
+})
+
+
+const grid = new Grid(scene);
+grid.generate(3, 3);
+
+// function generateTriangles() {
+//     const buffer = new Float32Array(allVertices);
+//     const geometry = new THREE.BufferGeometry();
+//     geometry.setAttribute('position', new THREE.Float32BufferAttribute(buffer, 3));
+//     geometry.computeVertexNormals();
     
-    // grid parameters
-    public cellAmountX = 50;
-    public cellAmountY = 50;
-    public cellSizeX = .2;
-    public cellSizeY = .2;
-    
-    // meshes
-    public gridPoints: Mesh[][] = [];
-    public triangulation: Mesh = new Mesh();
-
-    // debug
-    public debugSphereRadius = 0.1;
-
-    private readonly scene: Scene;
-
-    public constructor(scene: Scene) {
-        this.scene = scene;
-
-        const api = {
-            threshold: this.threshold,
-        };
-
-        const gui = new GUI();
-        gui.add( api, 'threshold', this.lowerValue, this.higherValue ).step( 0.01 ).onChange( (value) => {
-            if(this.threshold === value) return;
-
-            this.threshold = value;
-            this.generateMesh();
-        });
-    }
-
-    public generateGrid(seed?: number): void {
-        const geometry = new SphereGeometry(this.debugSphereRadius);
-        const material = new MeshBasicMaterial({ color: "white" });
-
-        const halfGridSizeX = this.cellAmountX * this.cellSizeX / 2;
-        const halfGridSizeY = this.cellAmountY * this.cellSizeY / 2;
-        
-        for (let x = 0; x < this.cellAmountX + 1; x++) {
-            this.gridPoints[x] = [];
-
-            for (let y = 0; y < this.cellAmountY + 1; y++) {
-                const density = MathUtils.randomRange(this.lowerValue, this.higherValue);
-                const point = new Mesh(geometry, material);
-
-                point.position.x = x * this.cellSizeX - halfGridSizeX;
-                point.position.z = y * this.cellSizeY - halfGridSizeY;
-                point.position.y = 0;
-
-                point.userData.density = density;
-
-                this.gridPoints[x][y] = point;
-                this.scene.add(point);
-            }
-        }
-    }
-
-    public generateMesh(): void {
-        const components = [];
-
-        this.scene.clear();
-
-        const red = new MeshBasicMaterial({ color: "red" });
-        const blue = new MeshBasicMaterial({ color: "blue" });
-
-        for (let x = 0; x < this.cellAmountX; x++) {
-            for (let y = 0; y < this.cellAmountY; y++) {
-                if(this.gridPoints[x + 0][y + 0].userData.density > this.threshold) {
-                    const current = this.gridPoints[x + 0][y + 0];
-                    current.material = red;
-                    components.push(...current.position.toArray());
-
-                    const v1 = this.gridPoints[x + 1][y + 0].clone();
-                    v1.position.x = MathUtils.lerp(current.position.x, v1.position.x, v1.userData.density);
-                    components.push(...v1.position.toArray());
-
-                    const v2 = this.gridPoints[x + 0][y + 1].clone();
-                    v2.position.x = MathUtils.lerp(current.position.x, v2.position.x, v2.userData.density);
-                    components.push(...v2.position.toArray());
-                } else {
-                    this.gridPoints[x + 0][y + 0].material = blue;
-                }
-
-                if(this.gridPoints[x + 1][y + 0].userData.density > this.threshold) {
-                    const current = this.gridPoints[x + 1][y + 0];
-                    current.material = red;
-                    components.push(...current.position.toArray());
-
-                    const v1 = this.gridPoints[x + 1][y + 1].clone();
-                    v1.position.x = MathUtils.lerp(current.position.x, v1.position.x, v1.userData.density);
-                    components.push(...v1.position.toArray());
-
-                    const v2 = this.gridPoints[x + 0][y + 0].clone();
-                    v2.position.x = MathUtils.lerp(current.position.x, v2.position.x, v2.userData.density);
-                    components.push(...v2.position.toArray());
-                } else {
-                    this.gridPoints[x + 1][y + 0].material = blue;
-                }
-                
-                if(this.gridPoints[x + 0][y + 1].userData.density > this.threshold) {
-                    const current = this.gridPoints[x + 0][y + 1];
-                    current.material = red;
-                    components.push(...current.position.toArray());
-
-                    const v1 = this.gridPoints[x + 0][y + 0].clone();
-                    v1.position.x = MathUtils.lerp(current.position.x, v1.position.x, v1.userData.density);
-                    components.push(...v1.position.toArray());
-
-                    const v2 = this.gridPoints[x + 1][y + 1].clone();
-                    v2.position.x = MathUtils.lerp(current.position.x, v2.position.x, v2.userData.density);
-                    components.push(...v2.position.toArray());
-                } else {
-                    this.gridPoints[x + 0][y + 1].material = blue;
-                }
-
-                if(this.gridPoints[x + 1][y + 1].userData.density > this.threshold) {
-                    const current = this.gridPoints[x + 1][y + 1];
-                    current.material = red;
-                    components.push(...current.position.toArray());
-
-                    const v1 = this.gridPoints[x + 0][y + 1].clone();
-                    v1.position.x = MathUtils.lerp(current.position.x, v1.position.x, v1.userData.density);
-                    components.push(...v1.position.toArray());
-
-                    const v2 = this.gridPoints[x + 1][y + 0].clone();
-                    v2.position.x = MathUtils.lerp(current.position.x, v2.position.x, v2.userData.density);
-                    components.push(...v2.position.toArray());
-                } else {
-                    this.gridPoints[x + 1][y + 1].material = blue;
-                }
-            }
-        }
-
-
-        if (components.length > 0) {
-            const buffer = new Float32Array(components);
-            const geom = new BufferGeometry();
-            geom.setAttribute('position', new Float32BufferAttribute(buffer, 3));
-            geom.computeVertexNormals();
-
-            const mat = new MeshBasicMaterial({ color: 'green', side: DoubleSide });
-            const mesh = new Mesh(geom, mat);
-            this.scene.add(mesh);
-        }
-    }
-}
-
-const marchingSquare = new MarchingSquare(scene);
-marchingSquare.generateGrid();
-marchingSquare.generateMesh();
-
-window.addEventListener("resize", onResizeWindow);
-
-function onResizeWindow() {
-	renderer.setSize(window.innerWidth, window.innerHeight);
-}
+//     const material = new THREE.MeshBasicMaterial({ color: 'green', side: THREE.DoubleSide });
+//     const mesh = new THREE.Mesh(geometry, material);
+//     scene.add(mesh);
+// }
