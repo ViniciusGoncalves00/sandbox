@@ -88,9 +88,11 @@ canvas.addEventListener("click", (event: MouseEvent) => {
     }
 })
 
-
 const grid = new Grid(scene);
-grid.generate(3, 3);
+grid.generateGrid(20, 20);
+grid.randomizeDensity(0, 1);
+grid.updateConfiguration(0.5);
+grid.drawGrid();
 
 // function generateTriangles() {
 //     const buffer = new Float32Array(allVertices);

@@ -6,24 +6,26 @@ export class Square {
     public topRight: ControlNode;
     public topLeft: ControlNode;
 
-    public botVertex: Node;
-    public rightVertex: Node;
-    public topVertex: Node;
-    public leftVertex: Node;
+    public bot: Node;
+    public right: Node;
+    public top: Node;
+    public left: Node;
+    
+    public configuration: number = -1;
 
     public constructor(
         botLeft: ControlNode, botRight: ControlNode, topRight: ControlNode, topLeft: ControlNode,
-        botVertex: Node, rightVertex: Node, topVertex: Node, leftVertex: Node
+        bot: Node, right: Node, top: Node, left: Node
     ) {
         this.botLeft = botLeft;
         this.botRight = botRight;
         this.topRight = topRight;
         this.topLeft = topLeft;
 
-        this.botVertex = botVertex;
-        this.rightVertex = rightVertex;
-        this.topVertex = topVertex;
-        this.leftVertex = leftVertex;
+        this.bot = bot;
+        this.right = right;
+        this.top = top;
+        this.left = left;
     }
 
     public getControlNodeByIndex(index: number): ControlNode | null {
@@ -39,5 +41,14 @@ export class Square {
             case 3: return this.topLeft;
             default: return null;
         }
+    }
+
+    public updateConfiguration(threshold: number): void {
+        this.configuration = 0;
+
+        if (this.botLeft.density > threshold) this.configuration += 1;
+        if (this.botRight.density > threshold) this.configuration += 2;
+        if (this.topRight.density > threshold) this.configuration += 4;
+        if (this.topLeft.density > threshold) this.configuration += 8;
     }
 }
