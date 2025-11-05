@@ -25,7 +25,9 @@ export class Grid {
         scene.add(this.grid);
 
         this.controNodesMaterial = new MeshBasicMaterial({ color: new Color(0, 1, 0)});
-        this.debugNodeMaterial = new MeshBasicMaterial({ color: new Color(0, 0, 1)});
+        this.debugNodeMaterial = new MeshBasicMaterial({ color: new Color(0, 0.5, 0)});
+        this.debugNodeMaterial.transparent = true;
+        this.debugNodeMaterial.opacity = 0.01;
 
         const geometry = new SphereGeometry(0.05);
         this.controlNodeMesh = new Mesh(geometry, this.controNodesMaterial);
@@ -55,6 +57,18 @@ export class Grid {
         for (let x = 0; x < this.squares.length; x++) {
             for (let y = 0; y < this.squares[0].length; y++) {
                 this.squares[x][y].updateConfiguration(threshold)       
+            }
+        }
+    }
+
+    public updateColors(threshold: number): void {
+        if(!this.controlNodes) return;
+        
+        for (let x = 0; x < this.controlNodes.length; x++) {
+            for (let y = 0; y < this.controlNodes[0].length; y++) {
+                const density = this.controlNodes[x][y].density;
+                const inside = density > threshold;
+                this.controlNodes[x][y].mesh.material = inside ? new MeshBasicMaterial({ color: new Color(density, 0, 0)}) : new MeshBasicMaterial({ color: new Color(0, 0, density)});
             }
         }
     }
@@ -158,16 +172,15 @@ export class Grid {
             // 2 points
             case 3: return [square.botLeft, square.botRight, square.right, square.left];
             case 6: return [square.botRight, square.topRight, square.top, square.bot];
-            case 9: return [square.topRight, square.topLeft, square.left, square.right];
-            case 12: return [square.topLeft, square.botLeft, square.bot, square.top];
+            case 9: return [square.topLeft, square.botLeft, square.bot, square.top];
+            case 12: return [square.topRight, square.topLeft, square.left, square.right];
             case 5: return [square.botLeft, square.bot, square.right, square.topRight, square.top, square.left];
             case 10: return [square.botRight, square.right, square.top, square.topLeft, square.left, square.bot];
             // 3 points
             case 7: return [square.botLeft, square.botRight, square.topRight, square.top, square.left];
-            case 11: return [square.botRight, square.topRight, square.topLeft, square.left, square.bot];
+            case 11: return [square.topLeft, square.botLeft, square.botRight, square.right, square.top];
             case 13: return [square.topRight, square.topLeft, square.botLeft, square.bot, square.right];
-            case 14: return [square.topLeft, square.botLeft, square.botRight, square.right, square.top];
-
+            case 14: return [square.botRight, square.topRight, square.topLeft, square.left, square.bot];
             // 4 points
             case 15: return [square.botLeft, square.botRight, square.topRight, square.topLeft];
             default: return null;
