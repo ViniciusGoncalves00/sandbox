@@ -2,19 +2,20 @@ import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Mesh, MeshBa
 import { Node, ControlNode } from "./node";
 import { Square } from "./square";
 import { MathUtils } from "@viniciusgoncalves/ts-utils";
+import { lerp } from "three/src/math/MathUtils.js";
 
 export class Grid {
     public grid: Object3D
     public squares: Square[][] | null = null;
     public controlNodes: ControlNode[][] | null = null;
-    public verticesNodes: (Node | null)[][] | null = null;
+    public midPointsNodes: (Node | null)[][] | null = null;
     public meshVertices: Vector3[] = [];
 
     public controlNodeMesh: Mesh;
-    public debugNodeMesh: Mesh;
+    public midPointNodeMesh: Mesh;
 
     public controNodesMaterial: MeshBasicMaterial;
-    public debugNodeMaterial: MeshBasicMaterial;
+    public midPointMaterial: MeshBasicMaterial;
 
     private scene: Scene;
 
@@ -25,13 +26,13 @@ export class Grid {
         scene.add(this.grid);
 
         this.controNodesMaterial = new MeshBasicMaterial({ color: new Color(0, 1, 0)});
-        this.debugNodeMaterial = new MeshBasicMaterial({ color: new Color(0, 0.5, 0)});
-        this.debugNodeMaterial.transparent = true;
-        this.debugNodeMaterial.opacity = 0.01;
+        this.midPointMaterial = new MeshBasicMaterial({ color: new Color(0, 1, 0)});
+        this.midPointMaterial.transparent = true;
+        this.midPointMaterial.opacity = 1;
 
         const geometry = new SphereGeometry(0.05);
         this.controlNodeMesh = new Mesh(geometry, this.controNodesMaterial);
-        this.debugNodeMesh = new Mesh(geometry, this.debugNodeMaterial);
+        this.midPointNodeMesh = new Mesh(geometry, this.midPointMaterial);
     }
 
     public generateGrid(nodesAmountX: number, nodesAmountY: number): void {
@@ -47,6 +48,55 @@ export class Grid {
         for (let x = 0; x < this.controlNodes.length; x++) {
             for (let y = 0; y < this.controlNodes[0].length; y++) {
                 this.controlNodes[x][y].density = MathUtils.randomRange(min, max);                
+            }
+        }
+
+        
+        for (let x = 0; x < this.controlNodes.length; x++) {
+            for (let y = 0; y < this.controlNodes[0].length; y++) {
+                this.controlNodes[x][y].density = MathUtils.randomRange(min, max);                
+            }
+        }
+    }
+
+    public calculateMidPoints(threshold: number): void {
+        if(!this.squares || !this.midPointsNodes) return;
+
+        for (let x = 0; x < this.squares.length; x++) {
+            for (let y = 0; y < this.squares[0].length; y++) {
+                const square = this.squares[x][y];
+                const left = this.midPointsNodes[x * 2 + 0][y * 2 + 1];
+                const bot = this.midPointsNodes[x * 2 + 1][y * 2 + 0];
+                const right = this.midPointsNodes[x * 2 + 2][y * 2 + 1];
+                const top = this.midPointsNodes[x * 2 + 1][y * 2 + 2];
+
+                const alphaLeft = (threshold - square.topLeft.density) / (square.botLeft.density - square.topLeft.density);
+                const alphaBot = (threshold - square.botLeft.density) / (square.botRight.density - square.botLeft.density);
+                const alphaRight = (threshold - square.botRight.density) / (square.topRight.density - square.botRight.density);
+                const alphaTop = (threshold - square.topRight.density) / (square.topLeft.density - square.topRight.density);
+
+                const safe = (a: number) => (isFinite(a) ? Math.min(Math.max(a, 0), 1) : 0.5);
+
+                left?.mesh.position.lerpVectors(
+                    square.topLeft.mesh.position,
+                    square.botLeft.mesh.position,
+                    safe(alphaLeft)
+                );
+                bot?.mesh.position.lerpVectors(
+                    square.botLeft.mesh.position,
+                    square.botRight.mesh.position,
+                    safe(alphaBot)
+                );
+                right?.mesh.position.lerpVectors(
+                    square.botRight.mesh.position,
+                    square.topRight.mesh.position,
+                    safe(alphaRight)
+                );
+                top?.mesh.position.lerpVectors(
+                    square.topRight.mesh.position,
+                    square.topLeft.mesh.position,
+                    safe(alphaTop)
+                );
             }
         }
     }
@@ -68,7 +118,7 @@ export class Grid {
             for (let y = 0; y < this.controlNodes[0].length; y++) {
                 const density = this.controlNodes[x][y].density;
                 const inside = density > threshold;
-                this.controlNodes[x][y].mesh.material = inside ? new MeshBasicMaterial({ color: new Color(density, 0, 0)}) : new MeshBasicMaterial({ color: new Color(0, 0, density)});
+                this.controlNodes[x][y].mesh.material = inside ? new MeshBasicMaterial({ color: new Color(density, 0, 0)}) : new MeshBasicMaterial({ color: new Color(density, 0, 0)});
             }
         }
     }
@@ -108,23 +158,23 @@ export class Grid {
     }
 
     private createVerticesMatrix(nodesAmountX: number, nodesAmountY: number): void {
-        this.verticesNodes = [];
+        this.midPointsNodes = [];
         const verticesAmountX = nodesAmountX * 2 - 1;
         const verticesAmountY = nodesAmountY * 2 - 1;
 
         for (let x = 0; x < verticesAmountX; x++) {
-            this.verticesNodes[x] = [];
+            this.midPointsNodes[x] = [];
 
             for (let y = 0; y < verticesAmountY; y++) {
                 if (x % 2 === 0 && y % 2 === 0) {
-                    this.verticesNodes[x][y] = null;
+                    this.midPointsNodes[x][y] = null;
                 } else if (x % 2 === 1 && y % 2 === 1) {
-                    this.verticesNodes[x][y] = null;
+                    this.midPointsNodes[x][y] = null;
                 } else {
-                    const mesh = this.debugNodeMesh.clone();
+                    const mesh = this.midPointNodeMesh.clone();
                     mesh.position.set(x / 2, y / 2, 0);
 
-                    this.verticesNodes[x][y] = new Node(mesh);
+                    this.midPointsNodes[x][y] = new Node(mesh);
                     this.grid.add(mesh);
                 }
             }
@@ -132,7 +182,7 @@ export class Grid {
     }
 
     private createSquareMatrix(nodesAmountX: number, nodesAmountY: number): void {
-        if(!this.controlNodes || !this.verticesNodes) return;
+        if(!this.controlNodes || !this.midPointsNodes) return;
         
         this.squares = [];
         const squaresAmountX = nodesAmountX - 1;
@@ -147,10 +197,10 @@ export class Grid {
                 const topRight = this.controlNodes[x + 1][y + 1];
                 const topLeft = this.controlNodes[x + 0][y + 1];
 
-                const bot = this.verticesNodes[x * 2 + 1][y * 2 + 0] as Node;
-                const right = this.verticesNodes[x * 2 + 2][y * 2 + 1] as Node;
-                const top = this.verticesNodes[x * 2 + 1][y * 2 + 2] as Node;
-                const left = this.verticesNodes[x * 2 + 0][y * 2 + 1] as Node;
+                const bot = this.midPointsNodes[x * 2 + 1][y * 2 + 0] as Node;
+                const right = this.midPointsNodes[x * 2 + 2][y * 2 + 1] as Node;
+                const top = this.midPointsNodes[x * 2 + 1][y * 2 + 2] as Node;
+                const left = this.midPointsNodes[x * 2 + 0][y * 2 + 1] as Node;
 
                 this.squares[x][y] = new Square(
                     botLeft, botRight, topRight, topLeft,

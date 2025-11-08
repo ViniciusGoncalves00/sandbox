@@ -88,20 +88,11 @@ canvas.addEventListener("click", (event: MouseEvent) => {
     }
 })
 
+const threshold = 0.5;
 const grid = new Grid(scene);
 grid.generateGrid(16, 32);
 grid.randomizeDensity(0, 1);
-grid.updateConfiguration(0.5);
-grid.updateColors(0.5);
+grid.updateConfiguration(threshold);
+grid.updateColors(threshold);
+grid.calculateMidPoints(threshold);
 grid.drawGrid();
-
-// function generateTriangles() {
-//     const buffer = new Float32Array(allVertices);
-//     const geometry = new THREE.BufferGeometry();
-//     geometry.setAttribute('position', new THREE.Float32BufferAttribute(buffer, 3));
-//     geometry.computeVertexNormals();
-    
-//     const material = new THREE.MeshBasicMaterial({ color: 'green', side: THREE.DoubleSide });
-//     const mesh = new THREE.Mesh(geometry, material);
-//     scene.add(mesh);
-// }
