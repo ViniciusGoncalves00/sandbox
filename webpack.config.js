@@ -1,6 +1,5 @@
 import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
-import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -8,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 export default {
   mode: "production",
-  entry: "./src/index.ts",
+  entry: "./src/main.ts",
 
   output: {
     filename: "bundle.[contenthash].js",
@@ -23,10 +22,6 @@ export default {
         test: /\.tsx?$/,
         use: "ts-loader",
         exclude: /node_modules/,
-      },
-      {
-        test: /\.css$/i,
-        use: [MiniCssExtractPlugin.loader, "css-loader", "postcss-loader"],
       },
       {
         test: /\.(png|jpg|jpeg|gif|svg|glb|gltf|obj|fbx)$/i,
@@ -44,13 +39,9 @@ export default {
 
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./src/index.html",
+      template: "./index.html",
       filename: "index.html",
       inject: "body",
-    }),
-
-    new MiniCssExtractPlugin({
-      filename: "styles.[contenthash].css",
     }),
   ],
 
