@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "webpack --mode production"
   },
   "keywords": [],
   "author": "Vinicius Gonçalves",
@@ -13,7 +14,8 @@
     "@tailwindcss/cli": "^4.1.16",
     "@viniciusgoncalves/ts-utils": "^1.0.0",
     "tailwindcss": "^4.1.16",
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "webpack": "^5.102.1"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
