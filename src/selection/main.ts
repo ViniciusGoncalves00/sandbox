@@ -28,6 +28,10 @@ const renderer = new WebGPURenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const controls = new OrbitControls( camera, renderer.domElement );
+controls.mouseButtons = {
+    MIDDLE: THREE.MOUSE.PAN,
+    RIGHT: THREE.MOUSE.ROTATE,
+};
 
 window.addEventListener("resize", onResizeWindow);
 
@@ -70,4 +74,6 @@ scene.add(mesh0, mesh1, mesh2, mesh3);
 const selectionContext = new SelectionContext(canvas, camera, [mesh0, mesh1, mesh2, mesh3]);
 const selector = new Selector(selectionContext);
 const handler = new Handler(scene, selector);
-selector.onSelectCallbacks.push(() => selector.current ? handler.handle(selector.current) : "");
+
+selector.onSelectCallbacks.push(() => handler.handle(selector.current));
+selector.onDeselectCallbacks.push(() => handler.handle(selector.current));

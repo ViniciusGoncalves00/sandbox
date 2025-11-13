@@ -1,11 +1,11 @@
-import type { Camera, Mesh } from "three";
+import type { Camera, Mesh, Object3D } from "three";
 
 export class SelectionContext {
     public element: HTMLElement;
     public camera: Camera;
-    public objects: Mesh[];
+    public objects: Object3D[];
     
-    public constructor(element: HTMLElement, camera: Camera, objects: Mesh[] = []) {
+    public constructor(element: HTMLElement, camera: Camera, objects: Object3D[] = []) {
         this.element = element;
         this.camera = camera;
         this.objects = objects;

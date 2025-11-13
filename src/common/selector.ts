@@ -1,4 +1,4 @@
-import { Camera, Raycaster, Vector2, type Mesh } from "three";
+import { Camera, Object3D, Raycaster, Vector2, type Intersection, type Mesh } from "three";
 import type { ISelectable } from "./interfaces/ISelectable";
 import type { SelectionContext } from "./selection-context";
 
@@ -6,7 +6,8 @@ export class Selector {
     public enabled: boolean = true;
     public current: ISelectable | null = null;
 
-    private context: SelectionContext;
+    private context: SelectionContext | null = null;
+    private previousContext: SelectionContext | null = null;
     private readonly raycaster: Raycaster;
 
     // #region Parameters
@@ -16,61 +17,80 @@ export class Selector {
     // #region Callbacks
     private trySelectCallback: (event: PointerEvent) => ISelectable | null;
     public onSelectCallbacks: (() => void)[] = [];
+    public onDeselectCallbacks: (() => void)[] = [];
+    public onEnterContextCallbacks: (() => void)[] = [];
+    public onExitContextCallbacks: (() => void)[] = [];
     // #endregion
 
     public constructor(context: SelectionContext) {
         this.raycaster = new Raycaster();
         
-        this.trySelectCallback = (event: PointerEvent) => this.trySelect(event, this.context.objects);
+        this.trySelectCallback = (event: PointerEvent) => {
+            if(this.context) {
+                return this.trySelect(event, this.context.objects)
+            }
+            return null;
+        };
 
         this.context = context;
         this.enterContext();
     }
-    
-    public changeContext(context: SelectionContext): void {
+
+    public changeContext(context: SelectionContext | null): void {
         this.exitContext();
+        this.previousContext = this.context;
         this.context = context;
         this.enterContext();
+    }
+
+    public restorePreviousContext(): void {
+        this.changeContext(this.previousContext);
     }
 
     private enterContext(): void {
-        this.context.element.addEventListener("click", this.trySelectCallback);
+        this.context?.element.addEventListener("pointerdown", this.trySelectCallback);
+        for (const callback of this.onEnterContextCallbacks) callback();
     }
 
     private exitContext(): void {
-        this.context.element.removeEventListener("click", this.trySelectCallback);
+        this.context?.element.removeEventListener("pointerdown", this.trySelectCallback);
+        for (const callback of this.onExitContextCallbacks) callback();
     }
 
-    private trySelect(event: PointerEvent, objects: Mesh[]): ISelectable | null {
-        if(objects.length === 0) {
-            this.current = null;
-            return this.current;
-        }
+    private trySelect(event: PointerEvent, objects: Object3D[]): ISelectable | null {
+        if(!this.enabled || !this.context) return null;
+        console.log("TRIED SELECT")
 
-        const normalized = this.normalizeCoordinates(event);
-        const coordinates = new Vector2(normalized.x, normalized.y);
+        if(objects.length === 0) return this.deselect();
 
-        this.raycaster.setFromCamera(coordinates, this.context.camera)
+        const coordinates = this.normalizeCoordinates(event);
+        this.raycaster.setFromCamera(coordinates, this.context.camera);
 
         const filtered = this.filterVisible ? objects.filter(obj => obj.visible) : objects;
         const intersections = this.raycaster.intersectObjects(filtered);
-        if(intersections.length === 0) {
-            this.current = null;
-            return this.current;
-        }
+        if(intersections.length === 0) return this.deselect();
         
-        this.current = (intersections[0].object as unknown) as ISelectable;
-        for (const callback of this.onSelectCallbacks) callback();
-        return this.current;
+        return this.select(intersections);
     }
 
-    private normalizeCoordinates(event: PointerEvent): {x: number, y: number} {
+    private normalizeCoordinates(event: PointerEvent): Vector2 {
+        if(!this.context) return new Vector2();
+
         const rect = this.context.element.getBoundingClientRect();
         const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        return { x, y };
+        return new Vector2(x, y);
     }
 
-    private onSelect(): void {}
-    private deselect(): void {}
+    private select(intersections: Intersection<Object3D>[]): ISelectable {
+        const object = intersections[0].object;
+        this.current = (object as unknown) as ISelectable;
+        for (const callback of this.onSelectCallbacks) callback();
+        return this.current;
+    }
+    private deselect(): null {
+        this.current = null;
+        for (const callback of this.onDeselectCallbacks) callback();
+        return null;
+    }
 }
