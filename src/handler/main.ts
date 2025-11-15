@@ -16,6 +16,7 @@ mesh2.position.set(+3, 1, -3);
 mesh3.position.set(+3, 1, +3);
 mesh0.rotateY(Math.PI / 4);
 mesh1.rotateY(-Math.PI / 8);
+mesh1.rotateZ(-Math.PI / 8);
 scene.add(mesh0, mesh1, mesh2, mesh3);
 
 const selectionContext = new SelectionContext(canvas, camera, [mesh0, mesh1, mesh2, mesh3]);
