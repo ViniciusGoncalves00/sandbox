@@ -73,18 +73,19 @@ function createDirectionHandler(
         new LineBasicMaterial({
             color,
             depthTest: false,
-            depthWrite: false
+            depthWrite: false,
         })
     );
 
     const square = new Mesh(plane, planeMaterial);
     square.add(outline);
 
-    // body.userData = { isHandler: true, handleType: name };
-    // head.userData = { isHandler: true, handleType: name };
-    // square.userData = { isHandler: true, handleType: name };
-
     group.add(body, head, square);
+
+    body.renderOrder = 9999;
+    head.renderOrder = 9999;
+    square.renderOrder = 9999;
+    outline.renderOrder = 9999;
 
     return group;
 }

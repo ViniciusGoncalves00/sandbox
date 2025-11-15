@@ -136,10 +136,12 @@ export class Handler {
     }
 
     private resize(): void {
+        if(!this.selectedObject) return;
+        
         const camera = this.scene.getObjectByName("MainCamera");
         const position = camera?.position.clone() || new Vector3(1, 1, 1);
         position.set(Math.abs(position.x), Math.abs(position.y), Math.abs(position.z));
-        const distance = position.distanceTo(new Vector3()) / 4;
+        const distance = position.distanceTo((this.selectedObject as unknown as Mesh).position) / 4;
         this.handler.scale.set(distance, distance, distance);
     }
 
