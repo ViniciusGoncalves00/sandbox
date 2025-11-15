@@ -1,4 +1,4 @@
-import type { Camera, Mesh, Object3D } from "three";
+import type { Camera, Object3D } from "three";
 
 export class SelectionContext {
     public element: HTMLElement;

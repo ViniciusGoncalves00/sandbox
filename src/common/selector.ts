@@ -59,7 +59,6 @@ export class Selector {
 
     private trySelect(event: PointerEvent, objects: Object3D[]): ISelectable | null {
         if(!this.enabled || !this.context) return null;
-        console.log("TRIED SELECT")
 
         if(objects.length === 0) return this.deselect();
 
