@@ -3,7 +3,13 @@ export enum Space {
     Local = "local",
 }
 
-export enum TransformationType {
+export enum Axis {
+    X = "x",
+    Y = "y",
+    Z = "z",
+}
+
+export enum Transformation {
     Translate = "translate",
     Rotate = "rotate",
     Scale = "scale",

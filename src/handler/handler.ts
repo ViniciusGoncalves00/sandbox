@@ -5,7 +5,8 @@ import { MeshPostProcessingMaterial, TransformControls } from "three/examples/js
 import type { Selector } from "../common/selector";
 import type { ISelectable } from "../common/interfaces/ISelectable";
 import { DEFAULT_HANDLER_PARAMETERS, type HandlerParameters } from "./handler-parameters";
-import { Space, TransformationType } from "./enums";
+import { Axis, Space, Transformation } from "./enums";
+import { HandlerComponent } from "./handler-component";
 
 
 export class Handler {
@@ -13,10 +14,11 @@ export class Handler {
     // private rotate: Object3D;
     // private scale: Object3D;
 
-    private activeHandle: string | null = null;
+    private activeHandle: HandlerComponent | null = null;
     private selectedObject: ISelectable | null = null;
     private startMousePos = new Vector2();
     private currentDelta = new Vector3();
+    private lastAngle: number = 0;
 
     // #region components
     public readonly handler: Object3D;
@@ -35,7 +37,7 @@ export class Handler {
     private handlerScaleFactor: number = 4;
     private translateSpeed: number = 0.1;
     private currentSpace: Space = Space.World;
-    private currentTransformation: TransformationType = TransformationType.Translate;
+    private currentTransformation: Transformation = Transformation.Translate;
 
      // #region components
     private readonly right: Vector3 = new Vector3(1, 0, 0);
@@ -70,13 +72,13 @@ export class Handler {
                     this.toggleSpace();
                     break;
                 case "t":
-                    this.setTransformation(TransformationType.Translate);
+                    this.setTransformation(Transformation.Translate);
                     break;
                 case "r":
-                    this.setTransformation(TransformationType.Rotate);
+                    this.setTransformation(Transformation.Rotate);
                     break;
                 case "y":
-                    this.setTransformation(TransformationType.Scale);
+                    this.setTransformation(Transformation.Scale);
                     break;
                 default:
                     break;
@@ -84,45 +86,59 @@ export class Handler {
         });
 
         const p = { ...DEFAULT_HANDLER_PARAMETERS, ...parameters };
-        
-        // translate
-        for (const child of p.handler.worldRightTranslate.children) child.userData = { handlerSpace: "world", handlerType: "rightTranslate" };
-        for (const child of p.handler.worldUpwardTranslate.children) child.userData = { handlerSpace: "world", handlerType: "upwardTranslate" };
-        for (const child of p.handler.worldForwardTranslate.children) child.userData = { handlerSpace: "world", handlerType: "forwardTranslate" };
-        for (const child of p.handler.localRightTranslate.children) child.userData = { handlerSpace: "local", handlerType: "rightTranslate" };
-        for (const child of p.handler.localUpwardTranslate.children) child.userData = { handlerSpace: "local", handlerType: "upwardTranslate" };
-        for (const child of p.handler.localForwardTranslate.children) child.userData = { handlerSpace: "local", handlerType: "forwardTranslate" };
 
-        p.handler.worldRightTranslate.userData = { handlerSpace: "world", handlerType: "rightTranslate" };
-        p.handler.worldUpwardTranslate.userData = { handlerSpace: "world", handlerType: "upwardTranslate" };
-        p.handler.worldForwardTranslate.userData = { handlerSpace: "world", handlerType: "forwardTranslate" };
-        p.handler.localRightTranslate.userData = { handlerSpace: "local", handlerType: "rightTranslate" };
-        p.handler.localUpwardTranslate.userData = { handlerSpace: "local", handlerType: "upwardTranslate" };
-        p.handler.localForwardTranslate.userData = { handlerSpace: "local", handlerType: "forwardTranslate" };
+        // translate
+        const worldRightTranslate = new HandlerComponent(Space.World, Axis.X, Transformation.Translate);
+        const worldUpwardTranslate = new HandlerComponent(Space.World, Axis.Y, Transformation.Translate);
+        const worldForwardTranslate = new HandlerComponent(Space.World, Axis.Z, Transformation.Translate);
+        const localRightTranslate = new HandlerComponent(Space.Local, Axis.X, Transformation.Translate);
+        const localUpwardTranslate = new HandlerComponent(Space.Local, Axis.Y, Transformation.Translate);
+        const localForwardTranslate = new HandlerComponent(Space.Local, Axis.Z, Transformation.Translate);
+
+        for (const child of p.handler.worldRightTranslate.children) child.userData = { handler: worldRightTranslate };
+        for (const child of p.handler.worldUpwardTranslate.children) child.userData = { handler: worldUpwardTranslate };
+        for (const child of p.handler.worldForwardTranslate.children) child.userData = { handler: worldForwardTranslate };
+        for (const child of p.handler.localRightTranslate.children) child.userData = { handler: localRightTranslate };
+        for (const child of p.handler.localUpwardTranslate.children) child.userData = { handler: localUpwardTranslate };
+        for (const child of p.handler.localForwardTranslate.children) child.userData = { handler: localForwardTranslate };
+
+        p.handler.worldRightTranslate.userData = { handler: worldRightTranslate };
+        p.handler.worldUpwardTranslate.userData = { handler: worldUpwardTranslate };
+        p.handler.worldForwardTranslate.userData = { handler: worldForwardTranslate };
+        p.handler.localRightTranslate.userData = { handler: localRightTranslate };
+        p.handler.localUpwardTranslate.userData = { handler: localUpwardTranslate };
+        p.handler.localForwardTranslate.userData = { handler: localForwardTranslate };
 
         this.worldTranslate.add(p.handler.worldForwardTranslate, p.handler.worldRightTranslate, p.handler.worldUpwardTranslate);
         this.localTranslate.add(p.handler.localForwardTranslate, p.handler.localRightTranslate, p.handler.localUpwardTranslate);
 
         // rotate
-        for (const child of p.handler.worldRightRotate.children) child.userData = { handlerSpace: "world", handlerType: "rightRotate" };
-        for (const child of p.handler.worldUpwardRotate.children) child.userData = { handlerSpace: "world", handlerType: "upwardRotate" };
-        for (const child of p.handler.worldForwardRotate.children) child.userData = { handlerSpace: "world", handlerType: "forwardRotate" };
-        for (const child of p.handler.localRightRotate.children) child.userData = { handlerSpace: "local", handlerType: "rightRotate" };
-        for (const child of p.handler.localUpwardRotate.children) child.userData = { handlerSpace: "local", handlerType: "upwardRotate" };
-        for (const child of p.handler.localForwardRotate.children) child.userData = { handlerSpace: "local", handlerType: "forwardRotate" };
+        const worldRightRotate = new HandlerComponent(Space.World, Axis.X, Transformation.Rotate);
+        const worldUpwardRotate = new HandlerComponent(Space.World, Axis.Y, Transformation.Rotate);
+        const worldForwardRotate = new HandlerComponent(Space.World, Axis.Z, Transformation.Rotate);
+        const localRightRotate = new HandlerComponent(Space.Local, Axis.X, Transformation.Rotate);
+        const localUpwardRotate = new HandlerComponent(Space.Local, Axis.Y, Transformation.Rotate);
+        const localForwardRotate = new HandlerComponent(Space.Local, Axis.Z, Transformation.Rotate);
 
-        p.handler.worldRightRotate.userData = { handlerSpace: "world", handlerType: "rightRotate" };
-        p.handler.worldUpwardRotate.userData = { handlerSpace: "world", handlerType: "upwardRotate" };
-        p.handler.worldForwardRotate.userData = { handlerSpace: "world", handlerType: "forwardRotate" };
-        p.handler.localRightRotate.userData = { handlerSpace: "local", handlerType: "rightRotate" };
-        p.handler.localUpwardRotate.userData = { handlerSpace: "local", handlerType: "upwardRotate" };
-        p.handler.localForwardRotate.userData = { handlerSpace: "local", handlerType: "forwardRotate" };
+        for (const child of p.handler.worldRightRotate.children) child.userData = { handler: worldRightRotate };
+        for (const child of p.handler.worldUpwardRotate.children) child.userData = { handler: worldUpwardRotate };
+        for (const child of p.handler.worldForwardRotate.children) child.userData = { handler: worldForwardRotate };
+        for (const child of p.handler.localRightRotate.children) child.userData = { handler: localRightRotate };
+        for (const child of p.handler.localUpwardRotate.children) child.userData = { handler: localUpwardRotate };
+        for (const child of p.handler.localForwardRotate.children) child.userData = { handler: localForwardRotate };
+
+        p.handler.worldRightRotate.userData = { handler: worldRightRotate };
+        p.handler.worldUpwardRotate.userData = { handler: worldUpwardRotate };
+        p.handler.worldForwardRotate.userData = { handler: worldForwardRotate };
+        p.handler.localRightRotate.userData = { handler: localRightRotate };
+        p.handler.localUpwardRotate.userData = { handler: localUpwardRotate };
+        p.handler.localForwardRotate.userData = { handler: localForwardRotate };
 
         this.worldRotate.add(p.handler.worldForwardRotate, p.handler.worldRightRotate, p.handler.worldUpwardRotate);
         this.localRotate.add(p.handler.localForwardRotate, p.handler.localRightRotate, p.handler.localUpwardRotate);
 
         this.setSpace(Space.World);
-        this.setTransformation(TransformationType.Translate);
+        this.setTransformation(Transformation.Translate);
 
         this.resize();
     }
@@ -143,7 +159,7 @@ export class Handler {
         }
     }
 
-    public setTransformation(type: TransformationType): void {
+    public setTransformation(type: Transformation): void {
         this.currentTransformation = type;
         this.updateVisibleGizmos();
     }
@@ -153,14 +169,14 @@ export class Handler {
             this.worldTranslate.visible = false;
             this.worldRotate.visible = false;
             this.worldScale.visible = false;
-            this.localTranslate.visible = this.currentTransformation === TransformationType.Translate ? true : false;
-            this.localRotate.visible = this.currentTransformation === TransformationType.Rotate ? true : false;
-            this.localScale.visible = this.currentTransformation === TransformationType.Scale ? true : false;
+            this.localTranslate.visible = this.currentTransformation === Transformation.Translate ? true : false;
+            this.localRotate.visible = this.currentTransformation === Transformation.Rotate ? true : false;
+            this.localScale.visible = this.currentTransformation === Transformation.Scale ? true : false;
             this.currentSpace = Space.Local;
         } else if (space === Space.World) {
-            this.worldTranslate.visible = this.currentTransformation === TransformationType.Translate ? true : false;
-            this.worldRotate.visible = this.currentTransformation === TransformationType.Rotate ? true : false;
-            this.worldScale.visible = this.currentTransformation === TransformationType.Scale ? true : false;
+            this.worldTranslate.visible = this.currentTransformation === Transformation.Translate ? true : false;
+            this.worldRotate.visible = this.currentTransformation === Transformation.Rotate ? true : false;
+            this.worldScale.visible = this.currentTransformation === Transformation.Scale ? true : false;
             this.localTranslate.visible = false;
             this.localRotate.visible = false;
             this.localScale.visible = false;
@@ -197,14 +213,14 @@ export class Handler {
     private updateVisibleGizmos(): void {
         const isWorld = this.currentSpace === Space.World;
 
-        this.worldTranslate.visible = isWorld && this.currentTransformation === TransformationType.Translate;
-        this.localTranslate.visible = !isWorld && this.currentTransformation === TransformationType.Translate;
+        this.worldTranslate.visible = isWorld && this.currentTransformation === Transformation.Translate;
+        this.localTranslate.visible = !isWorld && this.currentTransformation === Transformation.Translate;
 
-        this.worldRotate.visible = isWorld && this.currentTransformation === TransformationType.Rotate;
-        this.localRotate.visible = !isWorld && this.currentTransformation === TransformationType.Rotate;
+        this.worldRotate.visible = isWorld && this.currentTransformation === Transformation.Rotate;
+        this.localRotate.visible = !isWorld && this.currentTransformation === Transformation.Rotate;
 
-        this.worldScale.visible = isWorld && this.currentTransformation === TransformationType.Scale;
-        this.localScale.visible = !isWorld && this.currentTransformation === TransformationType.Scale;
+        this.worldScale.visible = isWorld && this.currentTransformation === Transformation.Scale;
+        this.localScale.visible = !isWorld && this.currentTransformation === Transformation.Scale;
     }
 
     private resize(): void {
@@ -236,7 +252,7 @@ export class Handler {
 
         let object;
         for (const intersection of intersections) {
-            if(intersection.object.userData.handlerSpace === this.currentSpace) {
+            if(intersection.object.userData.handler && intersection.object.userData.handler.space === this.currentSpace) {
                 object = intersection.object;
                 break;
             }
@@ -246,9 +262,9 @@ export class Handler {
             return false;
         }
         
-        const handleType = object.userData.handlerType;
-        if (handleType) {
-            this.startDrag(handleType, event);
+        const handlerComponent = object.userData.handler;
+        if (handlerComponent) {
+            this.startDrag(handlerComponent, event);
             return true;
         }
 
@@ -262,10 +278,17 @@ export class Handler {
         return { x, y };
     }
 
-    private startDrag(handleType: string, event: MouseEvent) {
+    private startDrag(handlerComponent: HandlerComponent, event: MouseEvent) {
         this.selector.enabled = false;
-        this.activeHandle = handleType;
+        this.activeHandle = handlerComponent;
         this.startMousePos.set(event.clientX, event.clientY);
+        
+        const mesh = this.selectedObject as unknown as Mesh;
+        const camera = this.scene.getObjectByName("MainCamera") as Camera;
+        const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
+        const height = this.selector.currentContext()?.element.clientHeight ?? 1;
+        const center = this.worldToScreenPoint(mesh.position, camera, width, height);
+        this.lastAngle = Math.atan2(event.clientY - center.y, event.clientX - center.x);
 
         window.addEventListener("mousemove", this.onDrag);
         window.addEventListener("mouseup", this.endDrag);
@@ -274,100 +297,67 @@ export class Handler {
     private onDrag = (event: MouseEvent) => {
         if (!this.activeHandle || !this.selectedObject) return;
 
+        const handler = this.activeHandle;
+        const mesh = this.selectedObject as unknown as Mesh;
+
         const dx = event.clientX - this.startMousePos.x;
         const dy = event.clientY - this.startMousePos.y;
 
-        const movement = new Vector2(dx, dy).normalize();
-        const distance = movement.distanceTo(new Vector2()) * this.translateSpeed;
+        const moveDirection = new Vector2(dx, dy).normalize();
+        const moveDistance = moveDirection.length() * this.translateSpeed;
 
-        const cameraDirection = new Vector3();
         const camera = this.scene.getObjectByName("MainCamera") as Camera;
         if (!camera) return;
-        camera.getWorldDirection(cameraDirection);
 
-        const mesh = this.selectedObject as unknown as Mesh;
+        const mousePos = new Vector2(event.clientX, event.clientY);
         const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
         const height = this.selector.currentContext()?.element.clientHeight ?? 1;
 
-        if(this.currentSpace === Space.Local) {
-            const q = mesh.getWorldQuaternion(new Quaternion());
+        const axis = this.getAxisVector(handler.axis);
 
-            switch (this.activeHandle) {
-                case "rightTranslate": {
-                    const right = new Vector3(1, 0, 0).applyQuaternion(q);
-                    mesh.translateX(this.getDelta(camera, mesh.position, right, movement, distance, width, height));
-                    break;
-                }
-                case "upwardTranslate": {
-                    const up = new Vector3(0, 1, 0).applyQuaternion(q);
-                    mesh.translateY(this.getDelta(camera, mesh.position, up, movement, distance, width, height));
-                    break;
-                }
-                case "forwardTranslate": {
-                    const forward = new Vector3(0, 0, 1).applyQuaternion(q);
-                    mesh.translateZ(this.getDelta(camera, mesh.position, forward, movement, distance, width, height));
-                    break;
-                }
-                // case "rightRotate": {
-                //     const axis = mesh.localToWorld(right).sub(mesh.position).normalize();
-                //     const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                //     mesh.rotateX(delta * sign);
-                //     break;
-                // }
-                // case "upwardRotate": {
-                //     const axis = mesh.localToWorld(upward).sub(mesh.position).normalize();
-                //     const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                //     mesh.rotateY(delta * sign);
-                //     break;
-                // }
-                // case "forwardRotate": {
-                //     const axis = mesh.localToWorld(forward).sub(mesh.position).normalize();
-                //     const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                //     mesh.rotateZ(delta * sign);
-                //     break;
-                // }
+        if (handler.isTranslate()) {
+            const delta = this.getDeltaTranslation(
+                camera,
+                mesh.position,
+                axis,
+                moveDirection,
+                moveDistance,
+                width,
+                height
+            );
+            if(handler.space === Space.Local) {
+                mesh.translateOnAxis(axis, -delta);
+            } else if(handler.space === Space.World) {
+                mesh.position.addScaledVector(axis, -delta);
             }
-        } else if (this.currentSpace === Space.World) {
-            switch (this.activeHandle) {
-                case "rightTranslate": {
-                    mesh.position.x += this.getDelta(camera, mesh.position, this.right, movement, distance, width, height);
-                    break;
-                }
-            
-                case "upwardTranslate": {
-                    mesh.position.y += this.getDelta(camera, mesh.position, this.upward, movement, distance, width, height);
-                    break;
-                }
-            
-                case "forwardTranslate": {
-                    mesh.position.z += this.getDelta(camera, mesh.position, this.forward, movement, distance, width, height);
-                    break;
-                }
-                case "rightRotate": {
-                    const sign = cameraDirection.dot(this.forward) >= 0 ? 1 : -1;
-                    const q = new Quaternion().setFromAxisAngle(this.right, distance * sign);
-                    mesh.applyQuaternion(q);
-                    break;
-                }
-                case "upwardRotate": {
-                    const sign = cameraDirection.dot(this.upward) >= 0 ? 1 : -1;
-                    const q = new Quaternion().setFromAxisAngle(this.upward, distance * sign);
-                    mesh.applyQuaternion(q);
-                    break;
-                }
-                case "forwardRotate": {
-                    const sign = cameraDirection.dot(this.right) >= 0 ? 1 : -1;
-                    const q = new Quaternion().setFromAxisAngle(this.forward, distance * sign);
-                    mesh.applyQuaternion(q);
-                    break;
-                }
+        } else if (handler.isRotate()) {
+            const cameraDir = new Vector3();
+            camera.getWorldDirection(cameraDir);
+
+            if (handler.space === Space.Local) {
+                axis.applyQuaternion(mesh.getWorldQuaternion(new Quaternion()));
             }
-        } else {
-            console.log("The object could not be transformed because the space was not recognized as valid. The value must be 'world' or 'local'");
+
+            const currentAngle = this.getAngle(camera, mesh.position, mousePos, width, height);
+            const deltaAngle = this.getRotation(currentAngle, cameraDir, axis);
+
+            mesh.rotateOnWorldAxis(axis, deltaAngle);  
+            this.lastAngle = currentAngle;
+        } else if (handler.isScale()) {
         }
 
         this.updateHandler();
         this.startMousePos.set(event.clientX, event.clientY);
+    }
+
+    private getAxisVector(axis: Axis): Vector3 {
+        const BASE_AXES = {
+            [Axis.X]: this.right,
+            [Axis.Y]: this.upward,
+            [Axis.Z]: this.forward,
+        };
+
+        return BASE_AXES[axis].clone();
     }
 
     private worldToScreenPoint(point: Vector3, camera: Camera, width: number, height: number): Vector2 {
@@ -377,7 +367,11 @@ export class Handler {
         return new Vector2(screenX, screenY);
     }
 
-    private getDelta(
+    private screenDirection(p1: Vector2, p2: Vector2): Vector2 {
+        return new Vector2().subVectors(p2, p1);
+    }
+
+    private getDeltaTranslation(
         camera: Camera,
         position: Vector3, axis: Vector3, movement: Vector2,
         distance: number, width: number, height: number
@@ -385,9 +379,24 @@ export class Handler {
         const direction = position.clone().add(axis.clone());
         const directionPoint = this.worldToScreenPoint(direction, camera, width, height);
         const originPoint = this.worldToScreenPoint(position, camera, width, height);
-        const screenDirection = new Vector2().subVectors(directionPoint, originPoint);
+        const screenDirection = this.screenDirection(directionPoint, originPoint);
         const dot = screenDirection.dot(movement);
         return Math.sign(dot) * distance;
+    }
+
+    private getAngle(
+        camera: Camera, position: Vector3, mousePosition: Vector2,
+        width: number, height: number): number
+    {
+        const center = this.worldToScreenPoint(position, camera, width, height);
+        const angle = Math.atan2(mousePosition.y - center.y, mousePosition.x - center.x);
+        return angle;
+    }
+
+    private getRotation(angle: number, direction: Vector3, axis: Vector3): number {
+        const deltaAngle = angle - this.lastAngle;
+        const sign = direction.dot(axis) >= 0 ? 1 : -1;
+        return deltaAngle * sign;
     }
 
     private endDrag = () => {

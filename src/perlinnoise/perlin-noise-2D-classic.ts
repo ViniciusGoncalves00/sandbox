@@ -128,7 +128,7 @@ export class PerlinNoise2D {
                 const nx1 = lerp(topLeftWeight, topRightWeight, u);
                 const height = lerp(nx0, nx1, v);
 
-                vertex.y = height;
+                vertex.y = height + Math.random() * 2;
                 vertices[x][z] = vertex;
             
                 if (x === this.meshCellsAmountX - 1) {
