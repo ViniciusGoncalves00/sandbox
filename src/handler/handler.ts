@@ -1,11 +1,12 @@
 import { ArrowHelper, AxesHelper, Camera, Color, ConeGeometry, CylinderGeometry, DoubleSide, EdgesGeometry, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, Quaternion, Raycaster, Vector2, Vector3, type ColorRepresentation, type Scene } from "three";
 import type { IHandable } from "../common/interfaces/IHandable";
 import { QuadMesh } from "three/webgpu";
-import { MeshPostProcessingMaterial } from "three/examples/jsm/Addons.js";
+import { MeshPostProcessingMaterial, TransformControls } from "three/examples/jsm/Addons.js";
 import type { Selector } from "../common/selector";
 import type { ISelectable } from "../common/interfaces/ISelectable";
 import { DEFAULT_HANDLER_PARAMETERS, type HandlerParameters } from "./handler-parameters";
 import { Space, TransformationType } from "./enums";
+
 
 export class Handler {
     public readonly toggleKey = "";
@@ -31,9 +32,16 @@ export class Handler {
     private selector: Selector;
     private readonly raycaster: Raycaster;
 
-    private scaleFactor: number = 1;
+    private handlerScaleFactor: number = 4;
+    private translateSpeed: number = 0.1;
     private currentSpace: Space = Space.World;
     private currentTransformation: TransformationType = TransformationType.Translate;
+
+     // #region components
+    private readonly right: Vector3 = new Vector3(1, 0, 0);
+    private readonly upward: Vector3 = new Vector3(0, 1, 0);
+    private readonly forward: Vector3 = new Vector3(0, 0, 1);
+    // #endregion
 
     public constructor(scene: Scene, selector: Selector, parameters?: HandlerParameters) {
         this.scene = scene;
@@ -182,6 +190,7 @@ export class Handler {
         this.handler.position.copy((this.selectedObject as unknown as Mesh).position);
         this.handler.visible = true;
 
+        this.resize();
         this.updateVisibleGizmos();
     }
 
@@ -204,7 +213,7 @@ export class Handler {
         const camera = this.scene.getObjectByName("MainCamera");
         const position = camera?.position.clone() || new Vector3(1, 1, 1);
         position.set(Math.abs(position.x), Math.abs(position.y), Math.abs(position.z));
-        const distance = position.distanceTo((this.selectedObject as unknown as Mesh).position) / 8;
+        const distance = position.distanceTo((this.selectedObject as unknown as Mesh).position) / this.handlerScaleFactor;
         this.handler.scale.set(distance, distance, distance);
     }
 
@@ -265,92 +274,90 @@ export class Handler {
     private onDrag = (event: MouseEvent) => {
         if (!this.activeHandle || !this.selectedObject) return;
 
-        const deltaX = event.clientX - this.startMousePos.x;
-        const deltaY = event.clientY - this.startMousePos.y;
-        const factor = 0.02;
+        const dx = event.clientX - this.startMousePos.x;
+        const dy = event.clientY - this.startMousePos.y;
 
-        const mesh = this.selectedObject as unknown as Mesh;
+        const movement = new Vector2(dx, dy).normalize();
+        const distance = movement.distanceTo(new Vector2()) * this.translateSpeed;
 
         const cameraDirection = new Vector3();
-        const camera = this.scene.getObjectByName("MainCamera");
-        camera?.getWorldDirection(cameraDirection);
+        const camera = this.scene.getObjectByName("MainCamera") as Camera;
+        if (!camera) return;
+        camera.getWorldDirection(cameraDirection);
 
-        const right = new Vector3(1, 0, 0);
-        const upward = new Vector3(0, 1, 0);
-        const forward = new Vector3(0, 0, 1);
+        const mesh = this.selectedObject as unknown as Mesh;
+        const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
+        const height = this.selector.currentContext()?.element.clientHeight ?? 1;
 
         if(this.currentSpace === Space.Local) {
+            const q = mesh.getWorldQuaternion(new Quaternion());
+
             switch (this.activeHandle) {
                 case "rightTranslate": {
-                    const axis = mesh.localToWorld(right).sub(mesh.position).normalize();
-                    const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                    mesh.translateX(deltaX * factor * sign);
+                    const right = new Vector3(1, 0, 0).applyQuaternion(q);
+                    mesh.translateX(this.getDelta(camera, mesh.position, right, movement, distance, width, height));
                     break;
                 }
                 case "upwardTranslate": {
-                    const axis = mesh.localToWorld(upward).sub(mesh.position).normalize();
-                    const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                    mesh.translateY(-deltaY * factor * sign);
+                    const up = new Vector3(0, 1, 0).applyQuaternion(q);
+                    mesh.translateY(this.getDelta(camera, mesh.position, up, movement, distance, width, height));
                     break;
                 }
                 case "forwardTranslate": {
-                    const axis = mesh.localToWorld(forward).sub(mesh.position).normalize();
-                    const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                    mesh.translateZ(deltaY * factor * sign);
+                    const forward = new Vector3(0, 0, 1).applyQuaternion(q);
+                    mesh.translateZ(this.getDelta(camera, mesh.position, forward, movement, distance, width, height));
                     break;
                 }
-                case "rightRotate": {
-                    const axis = mesh.localToWorld(right).sub(mesh.position).normalize();
-                    const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                    mesh.rotateX(deltaX * factor * sign);
-                    break;
-                }
-                case "upwardRotate": {
-                    const axis = mesh.localToWorld(upward).sub(mesh.position).normalize();
-                    const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                    mesh.rotateY(deltaX * factor * sign);
-                    break;
-                }
-                case "forwardRotate": {
-                    const axis = mesh.localToWorld(forward).sub(mesh.position).normalize();
-                    const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
-                    mesh.rotateZ(deltaX * factor * sign);
-                    break;
-                }
+                // case "rightRotate": {
+                //     const axis = mesh.localToWorld(right).sub(mesh.position).normalize();
+                //     const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
+                //     mesh.rotateX(delta * sign);
+                //     break;
+                // }
+                // case "upwardRotate": {
+                //     const axis = mesh.localToWorld(upward).sub(mesh.position).normalize();
+                //     const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
+                //     mesh.rotateY(delta * sign);
+                //     break;
+                // }
+                // case "forwardRotate": {
+                //     const axis = mesh.localToWorld(forward).sub(mesh.position).normalize();
+                //     const sign = cameraDirection.dot(axis) >= 0 ? 1 : -1;
+                //     mesh.rotateZ(delta * sign);
+                //     break;
+                // }
             }
         } else if (this.currentSpace === Space.World) {
             switch (this.activeHandle) {
                 case "rightTranslate": {
-                    const sign = cameraDirection.dot(forward) >= 0 ? 1 : -1;
-                    mesh.position.x -= deltaX * factor * sign;
+                    mesh.position.x += this.getDelta(camera, mesh.position, this.right, movement, distance, width, height);
                     break;
                 }
             
                 case "upwardTranslate": {
-                    mesh.position.y -= deltaY * factor;
+                    mesh.position.y += this.getDelta(camera, mesh.position, this.upward, movement, distance, width, height);
                     break;
                 }
             
                 case "forwardTranslate": {
-                    const sign = cameraDirection.dot(right) >= 0 ? 1 : -1;
-                    mesh.position.z += deltaX * factor * sign;
+                    mesh.position.z += this.getDelta(camera, mesh.position, this.forward, movement, distance, width, height);
                     break;
                 }
                 case "rightRotate": {
-                    const sign = cameraDirection.dot(forward) >= 0 ? 1 : -1;
-                    const q = new Quaternion().setFromAxisAngle(right, deltaY * factor * sign);
+                    const sign = cameraDirection.dot(this.forward) >= 0 ? 1 : -1;
+                    const q = new Quaternion().setFromAxisAngle(this.right, distance * sign);
                     mesh.applyQuaternion(q);
                     break;
                 }
                 case "upwardRotate": {
-                    const sign = cameraDirection.dot(upward) >= 0 ? 1 : -1;
-                    const q = new Quaternion().setFromAxisAngle(upward, deltaX * factor * sign);
+                    const sign = cameraDirection.dot(this.upward) >= 0 ? 1 : -1;
+                    const q = new Quaternion().setFromAxisAngle(this.upward, distance * sign);
                     mesh.applyQuaternion(q);
                     break;
                 }
                 case "forwardRotate": {
-                    const sign = cameraDirection.dot(right) >= 0 ? 1 : -1;
-                    const q = new Quaternion().setFromAxisAngle(forward, deltaY * factor * sign);
+                    const sign = cameraDirection.dot(this.right) >= 0 ? 1 : -1;
+                    const q = new Quaternion().setFromAxisAngle(this.forward, distance * sign);
                     mesh.applyQuaternion(q);
                     break;
                 }
@@ -361,6 +368,26 @@ export class Handler {
 
         this.updateHandler();
         this.startMousePos.set(event.clientX, event.clientY);
+    }
+
+    private worldToScreenPoint(point: Vector3, camera: Camera, width: number, height: number): Vector2 {
+        const ndc = point.clone().project(camera);
+        const screenX = (ndc.x + 1) * 0.5 * width
+        const screenY = (1 - ndc.y) * 0.5 * height
+        return new Vector2(screenX, screenY);
+    }
+
+    private getDelta(
+        camera: Camera,
+        position: Vector3, axis: Vector3, movement: Vector2,
+        distance: number, width: number, height: number
+    ): number {
+        const direction = position.clone().add(axis.clone());
+        const directionPoint = this.worldToScreenPoint(direction, camera, width, height);
+        const originPoint = this.worldToScreenPoint(position, camera, width, height);
+        const screenDirection = new Vector2().subVectors(directionPoint, originPoint);
+        const dot = screenDirection.dot(movement);
+        return Math.sign(dot) * distance;
     }
 
     private endDrag = () => {

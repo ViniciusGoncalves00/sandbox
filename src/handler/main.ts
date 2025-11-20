@@ -10,13 +10,11 @@ const mesh0 = new THREE.Mesh(geometry, material);
 const mesh1 = mesh0.clone();
 const mesh2 = mesh0.clone();
 const mesh3 = mesh0.clone();
-mesh0.position.set(-3, 1, -3);
-mesh1.position.set(-3, 1, +3);
-mesh2.position.set(+3, 1, -3);
-mesh3.position.set(+3, 1, +3);
-mesh0.rotateY(Math.PI / 4);
-mesh1.rotateY(-Math.PI / 8);
-mesh1.rotateZ(-Math.PI / 8);
+mesh0.position.set(-2.5, 1, -2.5);
+mesh1.position.set(-2.5, 1, +2.5);
+mesh2.position.set(+2.5, 1, -2.5);
+mesh3.position.set(+2.5, 1, +2.5);
+camera.position.set(7, 7, 7);
 scene.add(mesh0, mesh1, mesh2, mesh3);
 
 const selectionContext = new SelectionContext(canvas, camera, [mesh0, mesh1, mesh2, mesh3]);

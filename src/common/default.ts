@@ -4,7 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 export const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 export const scene = new THREE.Scene();
-scene.background = new THREE.Color(0.1, 0.1, 0.1);
+scene.background = new THREE.Color(0.015, 0.015, 0.015);
 
 export const camera = new THREE.PerspectiveCamera(
     75,
@@ -12,6 +12,32 @@ export const camera = new THREE.PerspectiveCamera(
     0.1,
     1000
 );
+
+const header = document.createElement("header");
+header.style.position = "fixed";
+header.style.top = "0";
+header.style.left = "0";
+header.style.display = "inline-flex";
+header.style.alignItems = "start";
+header.style.zIndex = "99";
+
+const link = document.createElement("a");
+link.href = "../../index.html";
+link.innerText = "BACK";
+link.style.background = "rgba(220, 220, 220, 1)";
+link.style.color = "black";
+link.style.margin = "16px 0px 0px 16px";
+link.style.padding = "4px 12px";
+link.style.borderRadius = "16px";
+link.style.display = "flex";
+link.style.alignItems = "center";
+link.style.fontFamily = "sans-serif";
+link.style.textDecoration = "none";
+link.style.fontSize = "12px";
+
+header.appendChild(link);
+// document.body.appendChild(header);
+
 
 camera.name = "MainCamera";
 camera.position.x = 1;
@@ -30,6 +56,7 @@ controls.mouseButtons = {
 };
 
 window.addEventListener("resize", onResizeWindow);
+canvas.addEventListener("resize", onResizeWindow);
 
 function onResizeWindow() {
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -52,5 +79,5 @@ scene.add(hemisphere);
 scene.add(ambient);
 scene.add(directional);
 
-const grid = new THREE.GridHelper();
+const grid = new THREE.GridHelper(10, 10, 0xcccccc, 0x888888);
 scene.add(grid);

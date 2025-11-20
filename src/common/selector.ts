@@ -47,6 +47,10 @@ export class Selector {
         this.changeContext(this.previousContext);
     }
 
+    public currentContext(): SelectionContext | null {
+        return this.context;
+    }
+
     private enterContext(): void {
         this.context?.element.addEventListener("pointerdown", this.trySelectCallback);
         for (const callback of this.onEnterContextCallbacks) callback();
