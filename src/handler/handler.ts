@@ -379,18 +379,18 @@ export class Handler {
                 height
             );
         
-            const scaleFactor = 1 + delta;
+            const scaleFactor = 1 + (delta * -1);
         
             if (handler.space === Space.Local) {
                 mesh.scale[handler.axis] *= scaleFactor;
             } else {
-                const worldAxis = axis.clone().applyQuaternion(
+                axis.applyQuaternion(
                     mesh.getWorldQuaternion(new Quaternion())
                 );
             
-                if (Math.abs(worldAxis.x) > 0.5) mesh.scale.x *= scaleFactor;
-                if (Math.abs(worldAxis.y) > 0.5) mesh.scale.y *= scaleFactor;
-                if (Math.abs(worldAxis.z) > 0.5) mesh.scale.z *= scaleFactor;
+                if (Math.abs(axis.x) > 0.5) mesh.scale.x *= scaleFactor;
+                if (Math.abs(axis.y) > 0.5) mesh.scale.y *= scaleFactor;
+                if (Math.abs(axis.z) > 0.5) mesh.scale.z *= scaleFactor;
             }
         }
 
