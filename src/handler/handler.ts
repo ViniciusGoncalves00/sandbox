@@ -137,6 +137,31 @@ export class Handler {
         this.worldRotate.add(p.handler.worldForwardRotate, p.handler.worldRightRotate, p.handler.worldUpwardRotate);
         this.localRotate.add(p.handler.localForwardRotate, p.handler.localRightRotate, p.handler.localUpwardRotate);
 
+         // scale
+        const worldRightScale = new HandlerComponent(Space.World, Axis.X, Transformation.Scale);
+        const worldUpwardScale = new HandlerComponent(Space.World, Axis.Y, Transformation.Scale);
+        const worldForwardScale = new HandlerComponent(Space.World, Axis.Z, Transformation.Scale);
+        const localRightScale = new HandlerComponent(Space.Local, Axis.X, Transformation.Scale);
+        const localUpwardScale = new HandlerComponent(Space.Local, Axis.Y, Transformation.Scale);
+        const localForwardScale = new HandlerComponent(Space.Local, Axis.Z, Transformation.Scale);
+
+        for (const child of p.handler.worldRightScale.children) child.userData = { handler: worldRightScale };
+        for (const child of p.handler.worldUpwardScale.children) child.userData = { handler: worldUpwardScale };
+        for (const child of p.handler.worldForwardScale.children) child.userData = { handler: worldForwardScale };
+        for (const child of p.handler.localRightScale.children) child.userData = { handler: localRightScale };
+        for (const child of p.handler.localUpwardScale.children) child.userData = { handler: localUpwardScale };
+        for (const child of p.handler.localForwardScale.children) child.userData = { handler: localForwardScale };
+
+        p.handler.worldRightScale.userData = { handler: worldRightScale };
+        p.handler.worldUpwardScale.userData = { handler: worldUpwardScale };
+        p.handler.worldForwardScale.userData = { handler: worldForwardScale };
+        p.handler.localRightScale.userData = { handler: localRightScale };
+        p.handler.localUpwardScale.userData = { handler: localUpwardScale };
+        p.handler.localForwardScale.userData = { handler: localForwardScale };
+
+        this.worldScale.add(p.handler.worldForwardScale, p.handler.worldRightScale, p.handler.worldUpwardScale);
+        this.localScale.add(p.handler.localForwardScale, p.handler.localRightScale, p.handler.localUpwardScale);
+
         this.setSpace(Space.World);
         this.setTransformation(Transformation.Translate);
 
@@ -344,6 +369,29 @@ export class Handler {
             mesh.rotateOnWorldAxis(axis, deltaAngle);  
             this.lastAngle = currentAngle;
         } else if (handler.isScale()) {
+            const delta = this.getDeltaTranslation(
+                camera,
+                mesh.position,
+                axis,
+                moveDirection,
+                moveDistance,
+                width,
+                height
+            );
+        
+            const scaleFactor = 1 + delta;
+        
+            if (handler.space === Space.Local) {
+                mesh.scale[handler.axis] *= scaleFactor;
+            } else {
+                const worldAxis = axis.clone().applyQuaternion(
+                    mesh.getWorldQuaternion(new Quaternion())
+                );
+            
+                if (Math.abs(worldAxis.x) > 0.5) mesh.scale.x *= scaleFactor;
+                if (Math.abs(worldAxis.y) > 0.5) mesh.scale.y *= scaleFactor;
+                if (Math.abs(worldAxis.z) > 0.5) mesh.scale.z *= scaleFactor;
+            }
         }
 
         this.updateHandler();
