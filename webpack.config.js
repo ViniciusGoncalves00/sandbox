@@ -1,6 +1,6 @@
 import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
-import CopyPlugin from "copy-webpack-plugin"; // ⬅ ADD
+import CopyPlugin from "copy-webpack-plugin";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,7 +14,7 @@ export default {
     filename: "bundle.[contenthash].js",
     path: path.resolve(__dirname, "dist"),
     clean: true,
-    publicPath: "./",
+    publicPath: "",
   },
 
   module: {
@@ -39,33 +39,32 @@ export default {
   },
 
   plugins: [
-    new HtmlWebpackPlugin({
-      template: "./index.html",
-      filename: "index.html",
-      inject: "body",
-    }),
-
+    // copia TUDO de src/ para dist/, exceto arquivos TS
     new CopyPlugin({
       patterns: [
         {
           from: "src",
           to: ".",
           globOptions: {
-            ignore: [
-              "**/*.ts",
-              "**/*.tsx",
-              "**/*.js",
-              "**/*.json",
-              "**/*.map",
-            ],
+            ignore: ["**/*.ts"], // ts é empacotado pelo webpack
           },
         },
       ],
     }),
+
+    // injeta bundle.js apenas no index principal
+    new HtmlWebpackPlugin({
+      template: "./src/index.html",
+      filename: "index.html",
+      inject: "body",
+    }),
   ],
 
   devServer: {
-    static: "./dist",
+    static: [
+      path.resolve(__dirname, "src"), // serve HTMLs do src no dev
+      path.resolve(__dirname, "dist"), // serve bundle no dev
+    ],
     hot: true,
     open: true,
     port: 3000,
