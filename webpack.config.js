@@ -5,7 +5,7 @@ module.exports = {
   entry: {
     main: "./src/main.ts",
     terrain: "./src/Terrain/terrain.ts",
-    handler: "./src/handler/outra.ts",
+    handler: "./src/handler/handler.ts",
   },
 
   output: {
