@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 
 export default {
   mode: "production",
+
   entry: "./src/main.ts",
 
   output: {
@@ -24,35 +25,28 @@ export default {
         use: "ts-loader",
         exclude: /node_modules/,
       },
-      {
-        test: /\.(png|jpg|jpeg|gif|svg|glb|gltf|obj|fbx)$/i,
-        type: "asset/resource",
-      },
     ],
   },
 
   resolve: {
-    extensions: [".ts", ".tsx", ".js"],
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
+    extensions: [".ts", ".js"],
   },
 
   plugins: [
-    // copia TUDO de src/ para dist/, exceto arquivos TS
+    // Copia toda a pasta src/ para dist/ (exceto .ts)
     new CopyPlugin({
       patterns: [
         {
           from: "src",
           to: ".",
           globOptions: {
-            ignore: ["**/*.ts"], // ts é empacotado pelo webpack
+            ignore: ["**/*.ts", "**/*.tsx"], // ignorar arquivos TS
           },
         },
       ],
     }),
 
-    // injeta bundle.js apenas no index principal
+    // Injeta o bundle apenas no index.html principal
     new HtmlWebpackPlugin({
       template: "./src/index.html",
       filename: "index.html",
@@ -61,12 +55,11 @@ export default {
   ],
 
   devServer: {
-    static: [
-      path.resolve(__dirname, "src"), // serve HTMLs do src no dev
-      path.resolve(__dirname, "dist"), // serve bundle no dev
-    ],
-    hot: true,
+    static: {
+      directory: path.resolve(__dirname, "src"), // servir src como raiz no DEV
+    },
     open: true,
+    hot: true,
     port: 3000,
   },
 };
