@@ -1,4 +1,4 @@
-import { ArrowHelper, BufferAttribute, BufferGeometry, Color, DoubleSide, Material, Mesh, MeshBasicMaterial, Scene, SphereGeometry, Vector2, Vector3, type Vector2Like } from "three";
+import { ArrowHelper, BufferAttribute, BufferGeometry, Color, ConeGeometry, DoubleSide, Material, Mesh, MeshBasicMaterial, Scene, SphereGeometry, Vector2, Vector3, type Vector2Like } from "three";
 import { ControlNode } from "./node";
 import { Square } from "./square";
 import { lerp, seededRandom } from "three/src/math/MathUtils.js";
@@ -47,10 +47,11 @@ export class PerlinNoise2D {
         this.scene = scene;
         this.selector = selector;
 
-        this.sphereGeometry = new SphereGeometry(1);
-        this.sphereGeometry.scale(0.5, 0.5, 0.5);
-        const material = new MeshBasicMaterial({ color: new Color("red")});
+        this.sphereGeometry = new SphereGeometry(1, 36, 2);
+        const material = new MeshBasicMaterial({ color: new Color("green"), transparent: true, opacity: 0.0});
+        const wireframe = new MeshBasicMaterial({ color: new Color("white"), wireframe: true});
         this.controlNodeDebugSphere = new Mesh(this.sphereGeometry, material);
+        this.controlNodeDebugSphere.add(new Mesh(this.sphereGeometry, wireframe));
 
         this.mesh = new Mesh();
         this.scene.add(this.mesh);
@@ -97,8 +98,6 @@ export class PerlinNoise2D {
         const direction: Vector3 = new Vector3();
         node.mesh.getWorldDirection(direction);
         node.direction = direction;
-        const point = node.mesh.position.clone().add(direction);
-        node.mesh.lookAt(point);
     }
 
     private randomizeDirection(node: ControlNode<Vector3>): void {
@@ -122,8 +121,8 @@ export class PerlinNoise2D {
                 const mesh = this.controlNodeDebugSphere.clone();
                 mesh.position.set(position.x, position.y, position.z);
 
-                // const arrowHelper = new ArrowHelper( up, new Vector3(), 10, 0xffff00 );
-                // mesh.add(arrowHelper);
+                const arrowHelper = new ArrowHelper( up, up, 2, new Color("white") );
+                mesh.add(arrowHelper);
 
                 this.controlGridSpheres.add(mesh);
 
