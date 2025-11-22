@@ -19,13 +19,11 @@ const camera = new THREE.PerspectiveCamera(
     1000
 );
 
-camera.name = "MainCamera";
-camera.position.x = -20;
-camera.position.y = 50;
-camera.position.z = -20;
-camera.lookAt(0, 0, 0);
 scene.add(camera);
-// camera.rotateY(MathUtils.deg2rad(90));
+
+camera.name = "MainCamera";
+camera.position.set(-80, 80, -80);
+camera.lookAt(50, 50, 50);
 
 const renderer = new WebGPURenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -42,12 +40,13 @@ function onResizeWindow() {
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 }
 
-
 const selectionContext = new SelectionContext(canvas, camera);
 const selector = new Selector(selectionContext);
 const handler = new Handler(scene, selector);
 const terrain = new Terrain(scene, selector);
-// terrain.generate();
+terrain.updateControlGrid();
+terrain.randomizeDirections();
+terrain.updateMesh();
 
 function animate() {
     requestAnimationFrame(animate);
@@ -66,8 +65,8 @@ const debug = gui.addFolder("Debug");
 
 const grid = parameters.addFolder("Grid");
 const size = grid.addFolder("Size");
-size.add( terrain, "gridSizeX").name("X").min(1).max(100).step(1).onChange(value => terrain.gridSizeX = value);
-size.add( terrain, "gridSizeZ").name("Z").min(1).max(100).step(1).onChange(value => terrain.gridSizeZ = value);
+size.add( terrain, "gridSizeX").name("X").min(1).max(1000).step(1).onChange(value => terrain.gridSizeX = value);
+size.add( terrain, "gridSizeZ").name("Z").min(1).max(1000).step(1).onChange(value => terrain.gridSizeZ = value);
 
 const controlNodes = parameters.addFolder("Control Nodes");
 const controlNodesAmount = controlNodes.addFolder("Amount");

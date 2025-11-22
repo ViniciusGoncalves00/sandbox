@@ -230,7 +230,10 @@ export class Handler {
         } else {
             console.warn("The space could not be repositioned correctly because the value was not recognized as valid. The value must be 'world' or 'local'");
         }
-        this.handler.position.copy((this.selectedObject as unknown as Mesh).position);
+        
+        const position: Vector3 = new Vector3();
+        (this.selectedObject as unknown as Mesh).getWorldPosition(position);
+        this.handler.position.copy(position);
         this.handler.visible = true;
 
         this.resize();

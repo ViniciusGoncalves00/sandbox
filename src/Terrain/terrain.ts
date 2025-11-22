@@ -20,11 +20,11 @@ export class Terrain {
     public gridSizeX: number = 100;
     public gridSizeZ: number = 100;
 
-    public controlNodesAmountX: number = 2;
-    public controlNodesAmountZ: number = 2;
+    public controlNodesAmountX: number = 3;
+    public controlNodesAmountZ: number = 3;
 
-    public quadResolutionX: number = 1;
-    public quadResolutionZ: number = 1;
+    public quadResolutionX: number = 20;
+    public quadResolutionZ: number = 20;
 
     public needRandomizeDirection: boolean = true;
     // #endregion
@@ -60,7 +60,7 @@ export class Terrain {
         this.controlGridSpheres.clear();
         this.generateControlGrid();
         // this.updateMesh();
-        this.centralize();
+        this.controlGridSpheres.position.set(-this.gridSizeX / 2, 0, -this.gridSizeZ / 2);
 
         this.selector.currentContext()?.objects.splice(0);
         this.selector.currentContext()?.objects.push(...this.controlGridSpheres.children);
@@ -71,6 +71,7 @@ export class Terrain {
 
         this.generateVertices();
         this.updateVerticesHeight();
+        this.mesh.position.set(-this.gridSizeX / 2, 0, -this.gridSizeZ / 2);
 
         this.generateMesh();
     }
@@ -82,7 +83,6 @@ export class Terrain {
                 this.randomizeDirection(node);
             }
         }
-        this.updateMesh();
     }
 
     public updateNodeDirection(uuid: string): void {
@@ -114,7 +114,7 @@ export class Terrain {
             for (let z = 0; z < this.controlNodesAmountZ; z++) {
                 const position = new Vector3(x * sizeX, 0, z * sizeZ);
                 const mesh = this.controlNodeDebugSphere.clone();
-                mesh.position.set(position.x, position.y, position.z);
+                mesh.position.copy(position);
 
                 const arrowHelper = new ArrowHelper( up, up, 2, new Color("white") );
                 mesh.add(arrowHelper);
@@ -238,8 +238,8 @@ export class Terrain {
     //     return [x, z];
     // }
 
-    private getCellSizeX(): number { return this.gridSizeX / this.controlNodesAmountX; }
-    private getCellSizeZ(): number { return this.gridSizeZ / this.controlNodesAmountZ; }
+    private getCellSizeX(): number { return this.gridSizeX / (this.controlNodesAmountX - 1); }
+    private getCellSizeZ(): number { return this.gridSizeZ / (this.controlNodesAmountZ - 1); }
 
     private getCellsAmountX(): number { return this.controlNodesAmountX - 1; }
     private getCellsAmountZ(): number { return this.controlNodesAmountZ - 1; }
@@ -278,19 +278,5 @@ export class Terrain {
 
     private interpolate(t: number): number {
         return t * t * t * (t * (t * 6 - 15) + 10);
-    }
-
-    private centralize(): void {
-        this.mesh.geometry.computeBoundingBox();
-
-        let center = new Vector3();
-        this.mesh.geometry.boundingBox?.getCenter(center);
-        this.mesh.translateX(-center.x);
-        this.mesh.translateY(-center.y);
-        this.mesh.translateZ(-center.z);
-        
-        this.controlGridSpheres.translateX(-center.x);
-        this.controlGridSpheres.translateY(-center.y);
-        this.controlGridSpheres.translateZ(-center.z);
     }
 }
