@@ -1,5 +1,6 @@
 import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
+import CopyPlugin from "copy-webpack-plugin"; // ⬅ ADD
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +43,24 @@ export default {
       template: "./index.html",
       filename: "index.html",
       inject: "body",
+    }),
+
+    new CopyPlugin({
+      patterns: [
+        {
+          from: "src",
+          to: ".",
+          globOptions: {
+            ignore: [
+              "**/*.ts",
+              "**/*.tsx",
+              "**/*.js",
+              "**/*.json",
+              "**/*.map",
+            ],
+          },
+        },
+      ],
     }),
   ],
 
