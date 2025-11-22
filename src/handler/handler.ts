@@ -11,6 +11,8 @@ import { HandlerComponent } from "./handler-component";
 
 export class Handler {
     public readonly toggleKey = "";
+    public readonly beforeTransformate: (() => void)[] = [];
+    public readonly afterTransformate: (() => void)[] = [];
     // private rotate: Object3D;
     // private scale: Object3D;
 
@@ -321,6 +323,7 @@ export class Handler {
 
     private onDrag = (event: MouseEvent) => {
         if (!this.activeHandle || !this.selectedObject) return;
+        for (const callback of this.beforeTransformate) callback();
 
         const handler = this.activeHandle;
         const mesh = this.selectedObject as unknown as Mesh;
@@ -396,6 +399,8 @@ export class Handler {
 
         this.updateHandler();
         this.startMousePos.set(event.clientX, event.clientY);
+
+        for (const callback of this.afterTransformate) callback();
     }
 
     private getAxisVector(axis: Axis): Vector3 {
