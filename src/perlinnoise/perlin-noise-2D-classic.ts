@@ -20,8 +20,8 @@ export class PerlinNoise2D {
     public gridSizeX: number = 100;
     public gridSizeZ: number = 100;
 
-    public controlNodesCellsAmountX: number = 1;
-    public controlNodesCellsAmountZ: number = 1;
+    public controlNodesAmountX: number = 2;
+    public controlNodesAmountZ: number = 2;
     public needRandomizeDirection: boolean = true;
 
     public meshResolutionX = 100;
@@ -30,7 +30,7 @@ export class PerlinNoise2D {
     public controlNodeCellSizeX: number = 1;
     public controlNodeCellSizeZ: number = 1;
     public resolutionXSize: number = 1;
-    public resolutionYSize: number = 1;
+    public resolutionZSize: number = 1;
     // #endregion
 
     // #region [visualization]
@@ -114,9 +114,9 @@ export class PerlinNoise2D {
 
         const up = new Vector3(0, 1, 0);
 
-        for (let x = 0; x <= this.controlNodesCellsAmountX; x++) {
+        for (let x = 0; x < this.controlNodesAmountX; x++) {
             this.controlGrid[x] = [];
-            for (let z = 0; z <= this.controlNodesCellsAmountZ; z++) {
+            for (let z = 0; z < this.controlNodesAmountZ; z++) {
                 const position = new Vector3(x * this.controlNodeCellSizeX, 0, z * this.controlNodeCellSizeZ);
                 const mesh = this.controlNodeDebugSphere.clone();
                 mesh.position.set(position.x, position.y, position.z);
@@ -134,12 +134,13 @@ export class PerlinNoise2D {
 
     private generateVertices(): void {
         this.vertices.splice(0);
-        for (let x = 0; x < this.meshResolutionX; x++) {
+
+        for (let x = 0; x < this.meshResolutionX + 1; x++) {
             this.vertices[x] = [];
-            for (let z = 0; z < this.meshResolutionZ; z++) {
+            for (let z = 0; z < this.meshResolutionZ + 1; z++) {
                 const vertex = new Vector3();
                 vertex.x = x * this.resolutionXSize;
-                vertex.z = z * this.resolutionYSize;
+                vertex.z = z * this.resolutionZSize;
             
                 this.vertices[x][z] = vertex;
             
@@ -224,34 +225,34 @@ export class PerlinNoise2D {
         const endOffset: number = 1;
 
         if(this.controlGrid.length === 2 && this.controlGrid[0].length === 2) {
-            this.updateRangeVerticesHeight(0, 0);
+            this.updateSquareVerticesHeight(0, 0);
             return;
         } else if(this.controlGrid.length === 2) {
             for (let z = startOffset; z < this.controlGrid[0].length - endOffset; z++) {
-                this.updateRangeVerticesHeight(0, z);
+                this.updateSquareVerticesHeight(0, z);
             }
             return;
         } else if (this.controlGrid[0].length === 2) {
             for (let x = startOffset; x < this.controlGrid.length - endOffset; x++) {
-                this.updateRangeVerticesHeight(x, 0);
+                this.updateSquareVerticesHeight(x, 0);
             }
             return;
         }
 
         for (let x = startOffset; x < this.controlGrid.length - endOffset; x++) {
             for (let z = startOffset; z < this.controlGrid[0].length - endOffset; z++) {
-                this.updateRangeVerticesHeight(x, z);
+                this.updateSquareVerticesHeight(x, z);
             }
         }
     }
 
-    private updateRangeVerticesHeight(controlNodeXIndex: number, controlNodeZIndex: number): void {
+    private updateSquareVerticesHeight(controlNodeXIndex: number, controlNodeZIndex: number): void {
         const [verticesPerSquareInX, verticesPerSquareInZ] = this.getCellResolution();
 
         const previousControlNodeXIndex = controlNodeXIndex === 0 ? controlNodeXIndex : controlNodeXIndex - 1;
         const previousControlNodeZIndex = controlNodeZIndex === 0 ? controlNodeZIndex : controlNodeZIndex - 1;
-        const nextControlNodeXIndex = controlNodeXIndex === this.controlGrid.length ? controlNodeXIndex : controlNodeXIndex + 1;
-        const nextControlNodeZIndex = controlNodeZIndex === this.controlGrid[0].length ? controlNodeZIndex : controlNodeZIndex + 1;
+        const nextControlNodeXIndex = controlNodeXIndex === this.controlGrid.length - 1 ? controlNodeXIndex : controlNodeXIndex + 1;
+        const nextControlNodeZIndex = controlNodeZIndex === this.controlGrid[0].length - 1 ? controlNodeZIndex : controlNodeZIndex + 1;
 
         const minXIndex = previousControlNodeXIndex * verticesPerSquareInX;
         const minZIndex = previousControlNodeZIndex * verticesPerSquareInZ;
@@ -266,14 +267,12 @@ export class PerlinNoise2D {
         }
     }
 
-    private getCellResolution(): [number, number] {
-        const x = this.meshResolutionX / this.controlNodesCellsAmountX;
-        const z = this.meshResolutionZ / this.controlNodesCellsAmountZ;
-        return [x, z];
-    }
-
     private calculateHeight(vertex: Vector3): void {
-        const neighbors = this.getNeighbors(vertex);
+        const [x, z] = this.coordinates2ControlNodeIndex(vertex);
+        x === this.vertices.length - 1 ? x - 1 : x;
+        z === this.vertices[0].length - 1 ? z - 1 : z;
+        
+        const neighbors = this.getNeighbors(x, z);
 
         const botLeftWeight = this.getWeight(vertex, neighbors.botLeft);
         const botRightWeight = this.getWeight(vertex, neighbors.botRight);
@@ -293,14 +292,21 @@ export class PerlinNoise2D {
         vertex.y = height;
     }
 
+    
+    private getCellResolution(): [number, number] {
+        const x = this.meshResolutionX / this.controlNodesAmountX;
+        const z = this.meshResolutionZ / this.controlNodesAmountZ;
+        return [x, z];
+    }
+
     private updateMeshResolution(): void {
         this.resolutionXSize = this.gridSizeX / this.meshResolutionX;
-        this.resolutionYSize = this.gridSizeZ / this.meshResolutionZ;
+        this.resolutionZSize = this.gridSizeZ / this.meshResolutionZ;
     }
 
     private updateCellResolution(): void {
-        this.controlNodeCellSizeX = this.gridSizeX / this.controlNodesCellsAmountX;
-        this.controlNodeCellSizeZ = this.gridSizeZ / this.controlNodesCellsAmountZ;
+        this.controlNodeCellSizeX = this.gridSizeX / this.controlNodesAmountX;
+        this.controlNodeCellSizeZ = this.gridSizeZ / this.controlNodesAmountZ;
     }
 
     // private generateMesh(): void {
@@ -393,9 +399,7 @@ export class PerlinNoise2D {
     //     this.mesh.add(mesh);
     // }
 
-    private getNeighbors(coordinates: Vector3): Square<ControlNode<Vector3>> {
-        const [x, z] = this.coordinates2Index(coordinates);
-
+    private getNeighbors(x: number, z: number): Square<ControlNode<Vector3>> {
         const botLeft = this.controlGrid[x + 0][z + 0];
         const botRight = this.controlGrid[x + 1][z + 0];
         const topRight = this.controlGrid[x + 1][z + 1];
@@ -404,7 +408,7 @@ export class PerlinNoise2D {
         return new Square(botLeft, botRight, topRight, topLeft);
     }
 
-    private coordinates2Index(coordinates: Vector3): [number, number] {
+    private coordinates2ControlNodeIndex(coordinates: Vector3): [number, number] {
         const nx = coordinates.x / this.controlNodeCellSizeX;
         const nz = coordinates.z / this.controlNodeCellSizeZ;
 

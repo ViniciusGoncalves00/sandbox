@@ -66,19 +66,19 @@ const debug = gui.addFolder("Debug");
 
 const grid = parameters.addFolder("Grid");
 const size = grid.addFolder("Size");
-size.add( perlinNoise2D, "gridSizeX", 1, 1000 ).name( "X").step(1).onChange(value => perlinNoise2D.gridSizeX = value);
-size.add( perlinNoise2D, "gridSizeZ", 1, 1000 ).name( "Z").step(1).onChange(value => perlinNoise2D.gridSizeZ = value);
+size.add( perlinNoise2D, "gridSizeX").name("X").min(1).max(100).step(1).onChange(value => perlinNoise2D.gridSizeX = value);
+size.add( perlinNoise2D, "gridSizeZ").name("Z").min(1).max(100).step(1).onChange(value => perlinNoise2D.gridSizeZ = value);
 
 const controlNodes = parameters.addFolder("Control Nodes");
-const controlNodesCells = controlNodes.addFolder("Cells Amount");
-controlNodesCells.add( perlinNoise2D, "controlNodesCellsAmountX", 1, 100, 1).name( "X").onChange(value => perlinNoise2D.controlNodesCellsAmountX = value);
-controlNodesCells.add( perlinNoise2D, "controlNodesCellsAmountZ", 1, 100, 1).name( "Z").onChange(value => perlinNoise2D.controlNodesCellsAmountZ = value);
-controlNodesCells.add( perlinNoise2D, "needRandomizeDirection").name( "randomize directions").onChange(value => perlinNoise2D.needRandomizeDirection = value);
+const controlNodesAmount = controlNodes.addFolder("Amount");
+controlNodesAmount.add( perlinNoise2D, "controlNodesAmountX").name("X").min(2).max(100).step(1).onChange(value => perlinNoise2D.controlNodesAmountX = value);
+controlNodesAmount.add( perlinNoise2D, "controlNodesAmountZ").name("Z").min(2).max(100).step(1).onChange(value => perlinNoise2D.controlNodesAmountZ = value);
+controlNodesAmount.add( perlinNoise2D, "needRandomizeDirection").name( "randomize directions").onChange(value => perlinNoise2D.needRandomizeDirection = value);
 
 const mesh = parameters.addFolder("Mesh");
-const meshCells = mesh.addFolder("Quads Amount");
-meshCells.add( perlinNoise2D, "meshResolutionX", 1, 1000, 1).name( "X").onChange(value => perlinNoise2D.meshResolutionX = value);
-meshCells.add( perlinNoise2D, "meshResolutionZ", 1, 1000, 1).name( "Z").onChange(value => perlinNoise2D.meshResolutionZ = value);
+const meshVerticesAmount = mesh.addFolder("Amount");
+meshVerticesAmount.add( perlinNoise2D, "meshResolutionX").name("X").min(1).max(1000).step(1).onChange(value => perlinNoise2D.meshResolutionX = value);
+meshVerticesAmount.add( perlinNoise2D, "meshResolutionZ").name("Z").min(1).max(1000).step(1).onChange(value => perlinNoise2D.meshResolutionZ = value);
 
 const transformation = parameters.addFolder("Transformation");
 const scale = transformation.addFolder("Scale");
