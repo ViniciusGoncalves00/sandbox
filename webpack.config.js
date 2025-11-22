@@ -5,7 +5,7 @@ module.exports = {
   entry: {
     main: "./src/main.ts",
     terrain: "./src/Terrain/terrain.ts",
-    handler: "./src/Handler/outra.ts",
+    handler: "./src/handler/outra.ts",
   },
 
   output: {
@@ -42,8 +42,8 @@ module.exports = {
     }),
 
     new HtmlWebpackPlugin({
-      template: "./src/Handler/index.html",
-      filename: "Handler/index.html",
+      template: "./src/handler/index.html",
+      filename: "handler/index.html",
       chunks: ["handler"],
     }),
   ]
