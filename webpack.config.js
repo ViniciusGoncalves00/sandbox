@@ -48,10 +48,10 @@ export default {
 
     // Injeta o bundle apenas no index.html principal
     new HtmlWebpackPlugin({
-      template: "./src/index.html",
-      filename: "index.html",
-      inject: "body",
-    }),
+        template: path.resolve(__dirname, "src/index.html"),
+        filename: "index.html",
+        inject: "body",
+    })
   ],
 
   devServer: {
