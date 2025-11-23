@@ -4,8 +4,8 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 module.exports = {
   entry: {
     main: "./src/main.ts",
-    terrain: "./src/Terrain/terrain.ts",
-    handler: "./src/handler/handler.ts",
+    terrain: "./src/terrain/main.ts",
+    handler: "./src/handler/main.ts",
   },
 
   output: {
@@ -36,8 +36,8 @@ module.exports = {
     }),
 
     new HtmlWebpackPlugin({
-      template: "./src/Terrain/index.html",
-      filename: "Terrain/index.html",
+      template: "./src/terrain/index.html",
+      filename: "terrain/index.html",
       chunks: ["terrain"],
     }),
 
