@@ -1,8 +1,8 @@
 import { ArrowHelper, BufferAttribute, BufferGeometry, Color, ConeGeometry, DoubleSide, Material, Mesh, MeshBasicMaterial, Scene, SphereGeometry, Vector2, Vector3, type Vector2Like } from "three";
-import { ControlNode } from "./node";
-import { Square } from "./square";
 import { lerp, seededRandom } from "three/src/math/MathUtils.js";
 import type { Selector } from "../common/selector";
+import { ControlNode } from "./node";
+import { Square } from "./square";
 
 export class Terrain {
     public readonly controlGrid: ControlNode<Vector3>[][] = [];
