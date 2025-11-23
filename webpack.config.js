@@ -1,23 +1,20 @@
 import path from "path";
-import HtmlWebpackPlugin from "html-webpack-plugin";
 import { fileURLToPath } from "url";
+import CopyPlugin from "copy-webpack-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  entry: {
-    main: "./src/main.ts",
-    handler: "./src/handler/main.ts",
-    terrain: "./src/terrain/main.ts",
-    marchingsquares: "./src/marchingsquares/main.ts",
-  },
+  mode: "production",
+
+  entry: "./src/main.ts",
 
   output: {
+    filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
-    filename: "[name]/bundle.[contenthash].js",
+    publicPath: "./",
     clean: true,
-    publicPath: "",
   },
 
   module: {
@@ -36,45 +33,19 @@ export default {
 
   resolve: {
     extensions: [".ts", ".js"],
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
   },
 
   plugins: [
-    new HtmlWebpackPlugin({
-      template: "./src/index.html",
-      filename: "index.html",
-      chunks: ["main"],
-      inject: "body",
-    }),
-
-    new HtmlWebpackPlugin({
-      template: "./src/handler/index.html",
-      filename: "handler/index.html",
-      chunks: ["handler"],
-      inject: "body",
-    }),
-
-    new HtmlWebpackPlugin({
-      template: "./src/terrain/index.html",
-      filename: "terrain/index.html",
-      chunks: ["terrain"],
-      inject: "body",
-    }),
-
-    new HtmlWebpackPlugin({
-      template: "./src/marchingsquares/index.html",
-      filename: "marchingsquares/index.html",
-      chunks: ["marchingsquares"],
-      inject: "body",
+    new CopyPlugin({
+      patterns: [
+        { from: "src", to: "." },
+      ],
     }),
   ],
 
   devServer: {
-    static: "./dist",
-    open: true,
-    hot: true,
+    static: "./src",
     port: 3000,
+    open: true,
   },
 };
