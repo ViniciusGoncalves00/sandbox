@@ -2,7 +2,8 @@ import { ArrowHelper, BufferAttribute, BufferGeometry, Color, ConeGeometry, Doub
 import { ControlNode } from "./node";
 import { Square } from "./square";
 import { lerp, seededRandom } from "three/src/math/MathUtils.js";
-import type { Selector } from "../common/selector";
+import { Selector } from "@viniciusgoncalves/three-toolkit";
+// import type { Selector } from "../common/selector";
 
 export class Terrain {
     public readonly controlGrid: ControlNode<Vector3>[][] = [];
@@ -62,8 +63,7 @@ export class Terrain {
         // this.updateMesh();
         this.controlGridSpheres.position.set(-this.gridSizeX / 2, 0, -this.gridSizeZ / 2);
 
-        this.selector.currentContext()?.objects.splice(0);
-        this.selector.currentContext()?.objects.push(...this.controlGridSpheres.children);
+        this.selector.setObjects(this.controlGridSpheres.children);
     }
 
     public updateMesh(): void {

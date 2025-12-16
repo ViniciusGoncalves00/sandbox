@@ -1,51 +1,39 @@
-import { Color, Material, MeshBasicMaterial, Vector2, type Mesh } from "three";
+import { Color, MeshBasicMaterial, Vector2, type Mesh } from "three";
 
 export class Tile {
-    private static emptyMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.1, 0.1), wireframe: true})
+    private static headMaterial = new MeshBasicMaterial({color: new Color(0.5, 0.1, 0.1)})
+    private static emptyMaterial = new MeshBasicMaterial({color: new Color(0.9, 0.9, 0.9), wireframe: true})
     private static snakeMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.5, 0.1)})
-    private static foodMaterial = new MeshBasicMaterial({color: new Color(0.5, 0.1, 0.1)})
+    private static foodMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.1, 0.5)})
     
     public readonly mesh: Mesh;
-    public readonly index: Vector2;
-    private isFood: boolean = false;
-    private isSnake: boolean = false;
 
-    public constructor(mesh: Mesh, index: Vector2) {
+    public constructor(mesh: Mesh) {
         this.mesh = mesh;
-        this.index = index;
         this.setEmpty();
     }
 
     public setFood(): Tile {
-        this.isFood = true;
-        this.isSnake = false;
         this.mesh.material = Tile.foodMaterial;
+        this.mesh.scale.set(0.9, 0.9, 0.9);
         return this;
     }
 
     public setSnake(): Tile {
-        this.isSnake = true;
-        this.isFood = false;
         this.mesh.material = Tile.snakeMaterial;
+        this.mesh.scale.set(0.9, 0.9, 0.9);
         return this;
     }
 
     public setEmpty(): Tile {
-        this.isFood = false;
-        this.isSnake = false;
         this.mesh.material = Tile.emptyMaterial;
+        this.mesh.scale.set(1.0, 1.0, 1.0);
         return this;
     }
 
-    public hasFood(): boolean {
-        return this.isFood;
-    }
-
-    public hasSnake(): boolean {
-        return this.isSnake;
-    }
-
-    public isEmpty(): boolean {
-        return !(this.isFood || this.isSnake);
+    public setHead(): Tile {
+        this.mesh.material = Tile.headMaterial;
+        this.mesh.scale.set(0.9, 0.9, 0.9);
+        return this;
     }
 }
