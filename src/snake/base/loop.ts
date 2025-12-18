@@ -8,7 +8,7 @@ export class Loop {
     private fixedRateMS: number = 33.33;
     private accumulator: number = 0;
 
-    private games = new Set<App>();
+    private apps = new Set<App>();
 
     private constructor() {
         this.loop = this.loop.bind(this);
@@ -22,11 +22,11 @@ export class Loop {
     }
 
     public add(game: App): void {
-        this.games.add(game);
+        this.apps.add(game);
     }
 
     public remove(game: App): void {
-        this.games.delete(game);
+        this.apps.delete(game);
     }
 
     public pause(): void {
@@ -50,19 +50,19 @@ export class Loop {
         this.previousTime = now;
         this.accumulator += deltaTime;
 
-        for (const game of this.games) {
-            game.update(deltaTime);
+        for (const app of this.apps) {
+            app.update(deltaTime);
         }
 
         while (this.accumulator >= this.fixedRateMS) {
-            for (const game of this.games) {
+            for (const game of this.apps) {
                 game.fixedUpdate();
             }
             this.accumulator -= this.fixedRateMS;
         }
 
-        for (const game of this.games) {
-            game.lateUpdate();
+        for (const app of this.apps) {
+            app.lateUpdate();
         }
     }
 }
