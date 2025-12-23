@@ -22,13 +22,3 @@ export enum TileType {
     SNAKE,
     FOOD,
 }
-
-export enum EventType {
-    START,
-    RESTART,
-    PAUSE,
-    RESUME,
-    QUIT,
-    LOSE,
-    WIN,
-}

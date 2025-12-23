@@ -1,40 +1,38 @@
-import type { App } from "./app";
-
 export class Loop {
-    private static instance: Loop;
-
     private frameID: number = 0;
     private previousTime: number | null = null;
-    private fixedRateMS: number = 33.33;
     private accumulator: number = 0;
+    private fixedRateMS: number = 33.33;
 
-    private apps = new Set<App>();
+    private readonly updatables = new Set<(deltaTime: number) => void>();
+    private readonly fixedUpdatables = new Set<() => void>();
 
-    private constructor() {
+    public constructor() {
         this.loop = this.loop.bind(this);
     }
 
-    public static getInstance(): Loop {
-        if (!this.instance) {
-            this.instance = new Loop();
-        }
-        return this.instance;
+    public add(func: (deltaTime: number) => void): void {
+        this.updatables.add(func);
     }
 
-    public add(game: App): void {
-        this.apps.add(game);
+    public addFixed(func: () => void): void {
+        this.fixedUpdatables.add(func);
     }
 
-    public remove(game: App): void {
-        this.apps.delete(game);
+    public remove(func: (deltaTime: number) => void): void {
+        this.updatables.delete(func);
     }
 
-    public pause(): void {
+    public removeFixed(func: () => void): void {
+        this.updatables.delete(func);
+    }
+
+    public stop(): void {
         this.previousTime = null;
         cancelAnimationFrame(this.frameID);
     }
 
-    public resume(): void {
+    public start(): void {
         requestAnimationFrame(this.loop);
     }
 
@@ -50,19 +48,15 @@ export class Loop {
         this.previousTime = now;
         this.accumulator += deltaTime;
 
-        for (const app of this.apps) {
-            app.update(deltaTime);
+        for (const func of this.updatables) {
+            func(deltaTime);
         }
 
         while (this.accumulator >= this.fixedRateMS) {
-            for (const game of this.apps) {
-                game.fixedUpdate();
+            for (const func of this.fixedUpdatables) {
+                func();
             }
             this.accumulator -= this.fixedRateMS;
-        }
-
-        for (const app of this.apps) {
-            app.lateUpdate();
         }
     }
 }

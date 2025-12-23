@@ -24,9 +24,9 @@ export class InputHandler {
     private onKeyDown(e: KeyboardEvent) {
         const key = e.key.toLowerCase();
 
-        if(key === "w") { this.direction = this.direction !== this.down ? this.up : this.down; }
+        if(key === "s") { this.direction = this.direction !== this.down ? this.up : this.down; }
         if(key === "d") { this.direction = this.direction !== this.right ? this.left : this.right; }
-        if(key === "s") { this.direction = this.direction !== this.up ? this.down : this.up; }
+        if(key === "w") { this.direction = this.direction !== this.up ? this.down : this.up; }
         if(key === "a") { this.direction = this.direction !== this.left ? this.right : this.left; }
     }
 }

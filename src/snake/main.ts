@@ -1,43 +1,68 @@
-import { BoxGeometry, Color, Mesh, MeshPhongMaterial, PerspectiveCamera, Scene, Timer, Vector2 } from "three";
-import { WebGPURenderer } from "three/webgpu";
-import { App, type ViewParameters } from "./base/app";
-import { degToRad } from "three/src/math/MathUtils.js";
-import { SnakeGame } from "./snakeGame";
-import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "./utils";
-import { Loop } from "./base/loop";
-import { UI } from "./ui";
-import { GameController } from "./base/appManager";
-import { InputHandler } from "./input-handler";
+import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "../snake/utils";
+import { SnakeGame } from "../snake/snakeGame";
+import { InputHandler } from "../snake/input-handler";
+import { ContextManager } from "../base/context-manager";
+import type { Context } from "../base/context";
 
-const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const scene = new Scene();
-scene.background = new Color(0.015, 0.015, 0.015);
+(async () => {
+    const steps = [1, 4, 9];
+    const timings = [3000, 3000, 3000];
+    let total = 0
 
-const camera = new PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-);
+    for (let index = 0; index < steps.length; index++) {
+        const amount = steps[index];
+        total += amount;
+        const duration = timings[index];
+        const games: SnakeGame[] = [];
+        let contexts: Context[] = [];
 
-camera.name = "MainCamera";
-camera.position.y = 10;
-camera.lookAt(0, 0, 0);
-camera.rotateZ(-degToRad(180));
-scene.add(camera);
+        await ContextManager.createMany(amount).then((newContexts) => {
+            contexts.push(...newContexts);
+            newContexts.forEach((context) => {
+                document.body.appendChild(context.container);
+            
+                const snakeParams: SnakeParameters = { speed: 10 };
+                const gridParams: BoardParameters = { width: 10, height: 10 };
+                const snakeGameParams: SnakeGameParameters = {
+                    snake: snakeParams,
+                    board: gridParams
+                };
+                const input = new InputHandler();
+                const snake = new SnakeGame(context, snakeGameParams, input);
+                games.push(snake);
+                context.loop.add((deltaTime) => snake.update(deltaTime));
+            
+                context.start();
+            })
+        
+            updateGridLayout(amount)
+        });
 
-const renderer = new WebGPURenderer({ canvas });
-renderer.setSize(window.innerWidth, window.innerHeight);
+        if(index < steps.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, duration));
+            contexts!.forEach(context => {
+                document.body.removeChild(context.container);
+                ContextManager.delete(context);
+            });
+            contexts!.splice(0);
+            games.forEach(game => game.destroy());
+        }
+    }
+})();
 
-window.addEventListener("resize", onResizeWindow);
-canvas.addEventListener("resize", onResizeWindow);
+function updateGridLayout(count: number) {
+    if (count <= 0) return { cols: 1, rows: 1 };
 
-function onResizeWindow() {
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    camera.updateProjectionMatrix();
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+
+    document.body.classList.remove(
+        "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4",
+        "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4"
+    );
+    
+    document.body.classList.add(
+        `grid-cols-${cols}`,
+        `grid-rows-${rows}`
+    );
 }
-
-const viewParams: ViewParameters = { renderer, camera, scene, canvas };
-
-UI.getInstance();
-new GameController(viewParams);
