@@ -3,8 +3,8 @@ import { Tile } from "./tile";
 import { type BoardParameters, type Vector2Int } from "./utils";
 
 export class Board {
-    private width: number
-    private height: number
+    public readonly width: number
+    public readonly height: number
 
     private readonly emptyTiles: Map<string, Tile> = new Map();
     private readonly snakeTiles: Map<string, Tile> = new Map();
@@ -24,7 +24,7 @@ export class Board {
                 clone.position.set(x, 0, z);
                 
                 const key = this.index2key({x, z});
-                const tile = new Tile(clone);
+                const tile = new Tile(clone, {x: x, z: z});
                 this.emptyTiles.set(key, tile);
             }
         }
@@ -45,6 +45,18 @@ export class Board {
         ]
     }
 
+    public getAllEmpty(): Tile[] {
+        return this.emptyTiles.values().toArray()
+    }
+
+    public getAllSnake(): Tile[] {
+        return this.snakeTiles.values().toArray()
+    }
+
+    public getAllFood(): Tile[] {
+        return this.foodTiles.values().toArray()
+    }
+
     public isInside(position: Vector2Int): boolean {
         return this.get(position) === undefined ? false : true;
     }
@@ -63,6 +75,16 @@ export class Board {
         const key = this.index2key(position);
         return this.foodTiles.get(key);
     }
+
+    // public nearestFood(position: Vector2Int): Tile | undefined {
+    //     const key = this.index2key(position);
+
+    //     let nearestFood: Tile;
+
+    //     this.foodTiles.keys().forEach(key => {
+    //         const pos = this.key2index(key);
+    //     })
+    // }
 
     public hasEmptyTile(): boolean {
         return this.emptyTiles.size > 0;
@@ -109,6 +131,11 @@ export class Board {
 
     public index2key(position: Vector2Int): string {
         return `${position.x},${position.z}`
+    }
+
+    public key2index(key: string): Vector2Int {
+        const [x, z] = key.split(",");
+        return {x: parseFloat(x), z: parseFloat(z)}
     }
 
     public newFood(): void {

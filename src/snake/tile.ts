@@ -1,4 +1,5 @@
 import { Color, MeshBasicMaterial, Vector2, type Mesh } from "three";
+import type { Vector2Int } from "./utils";
 
 export class Tile {
     private static headMaterial = new MeshBasicMaterial({color: new Color(0.5, 0.1, 0.1)})
@@ -7,9 +8,11 @@ export class Tile {
     private static foodMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.1, 0.5)})
     
     public readonly mesh: Mesh;
+    public readonly position: Vector2Int;
 
-    public constructor(mesh: Mesh) {
+    public constructor(mesh: Mesh, position: Vector2Int) {
         this.mesh = mesh;
+        this.position = position;
         this.setEmpty();
     }
 
