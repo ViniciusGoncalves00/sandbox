@@ -24,4 +24,8 @@ export class Snake {
     public grow(position: Vector2Int): void  {
         this.positions.push(position);
     }
+
+    public size(): number {
+        return this.positions.length;
+    }
 }

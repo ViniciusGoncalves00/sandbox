@@ -2,13 +2,13 @@ import * as THREE from "three"
 import { Application } from "../base2/application";
 import { Viewport3D, ViewportChart } from "../base2/viewport";
 import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "./utils";
-import { Human, PseudoHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath } from "./player";
+import { HalfPseudoHamiltonianCycle, Human, PseudoHamiltonianCycle, PseudoHamiltonianPartialCycle, PseudoHamiltonianHybridCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath } from "./player";
 import { SnakeGame } from "./snakeGame";
 import { Chart, type ChartConfiguration } from "chart.js/auto";
 import { GameEvent } from "../base2/events";
 
-const playerType = [Human, ShortestValidDirectionPath, ShortestValidDirectionImprovedPath, PseudoHamiltonianCycle];
-const speeds = [10, 10, 10, 500];
+const playerType = [PseudoHamiltonianCycle, HalfPseudoHamiltonianCycle, PseudoHamiltonianPartialCycle, PseudoHamiltonianHybridCycle];
+const speeds = [75, 75, 75, 75];
 
 for (let index = 0; index < playerType.length; index++) {
     const app = new Application();
@@ -59,6 +59,9 @@ for (let index = 0; index < playerType.length; index++) {
                     title: {
                         display: true,
                         text: 'Food index'
+                    },
+                    ticks: {
+                        stepSize: 1,
                     }
                 },
                 y: {
@@ -84,7 +87,8 @@ for (let index = 0; index < playerType.length; index++) {
                     y: snake.stepsPerFood.at(-1)!
                 });
                 break;
-            
+            case GameEvent.WIN:
+                viewport3d.disable();
             default:
                 break;
         }

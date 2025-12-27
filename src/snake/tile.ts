@@ -4,8 +4,8 @@ import type { Vector2Int } from "./utils";
 export class Tile {
     private static headMaterial = new MeshBasicMaterial({color: new Color(0.5, 0.1, 0.1)})
     private static emptyMaterial = new MeshBasicMaterial({color: new Color(0.9, 0.9, 0.9), wireframe: true})
-    private static snakeMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.5, 0.1)})
-    private static foodMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.1, 0.5)})
+    private static snakeMaterial = new MeshBasicMaterial({color: new Color(0.1, 0.6, 0.9)})
+    private static foodMaterial = new MeshBasicMaterial({color: new Color(0.83, 0.04, 0.26)})
     
     public readonly mesh: Mesh;
     public readonly position: Vector2Int;
