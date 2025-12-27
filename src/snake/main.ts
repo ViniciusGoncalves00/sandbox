@@ -1,69 +1,137 @@
-import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "../snake/utils";
-import { SnakeGame } from "../snake/snakeGame";
-import { ContextManager } from "../base/context-manager";
-import type { Context } from "../base/context";
-import { Human, ShortestPath, PseudoHamiltonianCycle, ShortestValidDirectionPath, DepthSearchFirst, ShortestValidDirectionImprovedPath } from "./player";
+import * as THREE from "three"
+import { Application } from "../base2/application";
+import { Viewport3D, ViewportChart } from "../base2/viewport";
+import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "./utils";
+import { Human, PseudoHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath } from "./player";
+import { SnakeGame } from "./snakeGame";
+import { Chart, type ChartConfiguration } from "chart.js/auto";
+import { GameEvent } from "../base2/events";
 
-(async () => {
-    // const steps = [1, 4, 9, 16];
-    const steps = [1];
-    const timings = [3000, 3000, 3000];
-    let total = 0
+const playerType = [Human, ShortestValidDirectionPath, ShortestValidDirectionImprovedPath, PseudoHamiltonianCycle];
+const speeds = [10, 10, 10, 500];
 
-    for (let index = 0; index < steps.length; index++) {
-        const amount = steps[index];
-        total += amount;
-        const duration = timings[index];
-        const games: SnakeGame[] = [];
-        let contexts: Context[] = [];
+for (let index = 0; index < playerType.length; index++) {
+    const app = new Application();
 
-        await ContextManager.createMany(amount).then((newContexts) => {
-            contexts.push(...newContexts);
-            newContexts.forEach((context) => {
-                document.body.appendChild(context.container);
-            
-                const snakeParams: SnakeParameters = { speed: 20 };
-                const gridParams: BoardParameters = { width: 10, height: 10 };
-                const snakeGameParams: SnakeGameParameters = {
-                    snake: snakeParams,
-                    board: gridParams
-                };
-                const player = new ShortestValidDirectionImprovedPath();
-                const snake = new SnakeGame(context, snakeGameParams, player);
-                games.push(snake);
-                context.loop.add((deltaTime) => snake.update(deltaTime));
-            
-                context.start();
-            })
-        
-            updateGridLayout(amount)
-        });
+    const viewport3d = app.register(new Viewport3D());
+    viewport3d.enable().append(document.body).setTitle(playerType[index].name);
 
-        if(index < steps.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, duration));
-            contexts!.forEach(context => {
-                document.body.removeChild(context.container);
-                ContextManager.delete(context);
-            });
-            contexts!.splice(0);
-            games.forEach(game => game.destroy());
+    const viewportChart = app.register(new ViewportChart());
+    viewportChart.enable().append(document.body).setTitle(playerType[index].name)
+
+    const scene = new THREE.Scene();
+
+    const fov = 75;
+    const near = 0.1;
+    const far = 1000;
+
+    const camera = new THREE.PerspectiveCamera(fov, 0, near, far);
+    camera.name = "MainCamera";
+    camera.position.set(10, 10, 10);
+    camera.lookAt(0, 0, 0);
+
+    viewport3d.setActiveCamera(camera).setScene(scene);
+
+    const snakeParams: SnakeParameters = { speed: speeds[index] };
+    const gridParams: BoardParameters = { width: 20, height: 20 };
+    const snakeGameParams: SnakeGameParameters = {
+        snake: snakeParams,
+        board: gridParams
+    };
+    const player = new playerType[index];
+    const snake = new SnakeGame(viewport3d, snakeGameParams, player);
+    app.register(snake);
+
+    const config: ChartConfiguration<'line'> = {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'Steps to get a food',
+                    data: [],
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: {
+                        display: true,
+                        text: 'Food index'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Steps'
+                    }
+                }
+            },
+            responsive: false,
+            maintainAspectRatio: false,
+            devicePixelRatio: window.devicePixelRatio
         }
-    }
-})();
+    };
+
+    viewport3d.gameEvents.subscribe((event) => {
+        const dataset = chart.data.datasets[0].data as { x: number; y: number }[];
+
+        switch (event) {
+            case GameEvent.ATE:
+                dataset.push({
+                    x: dataset.length,
+                    y: snake.stepsPerFood.at(-1)!
+                });
+                break;
+            
+            default:
+                break;
+        }
+    })
+
+    const chart = new Chart(viewportChart.canvas, config);
+    viewportChart.setChart(chart);
+}
+
+updateGridLayout(playerType.length * 2);
+
+// function updateGridLayout(count: number) {
+//     if (count <= 0) return { cols: 1, rows: 1 };
+
+//     const cols = Math.ceil(Math.sqrt(count));
+//     const rows = Math.ceil(count / cols);
+
+//     document.body.classList.remove(
+//         "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4",
+//         "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4"
+//     );
+
+//     document.body.classList.add(
+//         `grid-cols-${cols}`,
+//         `grid-rows-${rows}`
+//     );
+// }
 
 function updateGridLayout(count: number) {
-    if (count <= 0) return { cols: 1, rows: 1 };
+    if (count <= 0) return { cols: 2, rows: 1 };
 
-    const cols = Math.ceil(Math.sqrt(count));
+    let cols = Math.ceil(Math.sqrt(count));
+
+    // força número par
+    if (cols % 2 !== 0) cols++;
+
     const rows = Math.ceil(count / cols);
 
     document.body.classList.remove(
-        "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4",
-        "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4"
+        "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4", "grid-cols-6",
+        "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4", "grid-rows-6"
     );
-    
+
     document.body.classList.add(
         `grid-cols-${cols}`,
         `grid-rows-${rows}`
     );
+
+    return { cols, rows };
 }

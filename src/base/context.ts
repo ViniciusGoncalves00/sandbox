@@ -8,6 +8,7 @@ import type { WebGLRenderer } from "three";
 
 export class Context {
     public readonly id: string = generateUUID();
+    public project!: Project;
     public renderer!: WebGPURenderer;
     public activeCamera!: Camera;
     public scene!: Scene;
@@ -18,17 +19,12 @@ export class Context {
     public readonly loopEvents: EventSystem<LoopEvent> = new EventSystem();
     public readonly loop = new Loop();
 
-    private context!: Context;    
     private render!: () => Promise<void>
     private readonly resizeObserver: ResizeObserver;
 
     public constructor(params: ContextParameters) {
         this.resizeObserver = new ResizeObserver(() => { this.resize() });
         this.set(params);
-    }
-
-    public attachContext(app: Context) {
-        this.context = app;
     }
 
     public set(params: ContextParameters): void {

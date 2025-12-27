@@ -2,7 +2,6 @@ import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPU
 import * as THREE from "three/webgpu";
 import type { ContextParameters, Factory } from "./interfaces";
 import { Context } from "./context";
-import { degToRad } from "three/src/math/MathUtils.js";
 
 export class ContextFactory implements Factory<Context> {
     public create(): Context {

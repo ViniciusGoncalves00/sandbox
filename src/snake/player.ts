@@ -132,8 +132,8 @@ export class ShortestValidDirectionImprovedPath extends Player {
         };
 
         if (snakeGame.board.hasSnake(next) || snakeGame.board.hasSnake({
-            x: head.x + direction.x * 4,
-            z: head.z + direction.z * 4})) {
+            x: head.x + direction.x * 5,
+            z: head.z + direction.z * 5})) {
             const distances = [0, 0, 0, 0];
 
             let indexZ = 0;
