@@ -1,8 +1,9 @@
-import * as THREE from "three";
+import * as THREE from "three/webgpu";
 import type { BubbleDataPoint, Chart, ChartTypeRegistry, Point } from "chart.js";
 import { EventSystem } from "./event-system";
 import type { GameEvent, LoopEvent } from "./events";
 import type { Loopable } from "./interfaces";
+import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js";
 
 export abstract class Viewport<T> {
     protected enabled: boolean = false;
@@ -19,7 +20,7 @@ export abstract class Viewport<T> {
         this.wrapper.classList = "w-full h-full flex flex-col";
 
         this.title = document.createElement("p");
-        this.title.classList = "w-full h-8 text-white flex items-center justify-center flex-none";
+        this.title.classList = "w-full h-8 text-sm text-white flex items-center justify-center flex-none";
         this.wrapper.appendChild(this.title);
 
         this.canvas = document.createElement("canvas");
@@ -48,7 +49,7 @@ export abstract class Viewport<T> {
         return this;
     }
 
-    public setTitle(name: string): Viewport<T> { this.title.textContent = name; return this; }
+    public setTitle(name: string): Viewport<T> { this.title.textContent = name.split(/(?=[A-Z])/).join(" "); return this; }
 
     public enable(): Viewport<T> { this.enabled = true; return this; }
     public disable(): Viewport<T> { this.enabled = false; return this; }
@@ -64,7 +65,7 @@ export abstract class Viewport<T> {
 }
 
 export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
-    public readonly renderer: THREE.WebGLRenderer;
+    public readonly renderer: THREE.WebGPURenderer;
     private _camera: THREE.Camera | null = null;
     public get camera() { return this._camera };
     private _scene: THREE.Scene | null = null;
@@ -72,12 +73,13 @@ export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
 
     public readonly gameEvents: EventSystem<GameEvent> = new EventSystem();
     public readonly loopEvents: EventSystem<LoopEvent> = new EventSystem();
+    public app: Loopable | null = null;
 
     public constructor() {
         super();
 
-        const params: THREE.WebGLRendererParameters = { alpha: true, antialias: true, canvas: this.canvas };
-        this.renderer = new THREE.WebGLRenderer(params);
+        const params: WebGPURendererParameters = { alpha: true, antialias: true, canvas: this.canvas };
+        this.renderer = new THREE.WebGPURenderer(params); 
 
         this.errorMessage.textContent = "There is no camera or scene to render";
 
@@ -94,6 +96,12 @@ export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
     public setScene(scene: THREE.Scene | null): Viewport3D {
         this._scene = scene;
         scene === null ? this.showAdvise() : this.hideAdvise();
+        return this;
+    }
+
+    public setApp(app: Loopable | null): Viewport3D {
+        this.app = app;
+        app === null ? this.showAdvise() : this.hideAdvise();
         return this;
     }
 
@@ -116,6 +124,7 @@ export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
     public update(deltaTime: number): void {
         if (!this.enabled) return;
 
+        this.app?.update(deltaTime);
         if (this._scene && this._camera) this.renderer.render(this._scene, this._camera);
         // this.objects.forEach(object => object.update(deltaTime));
     }

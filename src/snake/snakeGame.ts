@@ -6,8 +6,9 @@ import type { Player } from "./player";
 import { Base, BaseObject } from "../base2/base";
 import type { Viewport3D } from "../base2/viewport";
 import { GameEvent } from "../base2/events";
+import type { Loopable } from "../base2/interfaces";
 
-export class SnakeGame extends Base {
+export class SnakeGame implements Loopable {
     public readonly board: Board;
     public readonly snake: Snake;
     public readonly player: Player;
@@ -21,8 +22,6 @@ export class SnakeGame extends Base {
     private accumulator: number = 0;
 
     public constructor(viewport: Viewport3D, snakeGameParams: SnakeGameParameters, player: Player) {
-        super();
-
         this.viewport = viewport;
         this.board = new Board(snakeGameParams.board);
         this.player = player;
@@ -55,11 +54,12 @@ export class SnakeGame extends Base {
         this.accumulator += deltaTime;
         while (this.accumulator >= this.updateRate) {
             this.player.update(this);
-            this.steps++;
             this.updateSnake(this.player.getDirection());
             this.accumulator -= this.updateRate;
         }
     }
+
+    public fixedUpdate(): void {}
 
     public destroy(): void {
         const meshes = this.board.getAll().map(tile => tile.mesh);
@@ -73,10 +73,9 @@ export class SnakeGame extends Base {
     public updateSnake(direction: Vector2Int): void {
         if(!this.board.hasEmptyTile()) {
             this.viewport.gameEvents.notify(GameEvent.WIN);
+            console.log(this.steps)
             return;
         }
-        this.steps++;
-        this.stepsSinceLastFood++;
 
         const tail = this.snake.tail();
         const head = this.snake.head();
@@ -86,6 +85,9 @@ export class SnakeGame extends Base {
             this.viewport.gameEvents.notify(GameEvent.LOSE);
             return;
         }
+
+        this.steps++;
+        this.stepsSinceLastFood++;
         
         if (this.board.hasFood(newHead)) {
             this.snake.move(newHead);

@@ -3,7 +3,7 @@ import { Application } from "./application";
 import { Viewport3D, ViewportChart } from "./viewport";
 import Chart, { type ChartConfiguration } from 'chart.js/auto'
 import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "../snake/utils";
-import { PseudoHamiltonianCycle, ShortestValidDirectionImprovedPath } from "../snake/player";
+import { HamiltonianCycle, ShortestValidDirectionImprovedPath } from "../snake/player";
 import { SnakeGame } from "../snake/snakeGame";
 import { GameEvent } from "./events";
 
@@ -37,7 +37,7 @@ const snakeGameParams: SnakeGameParameters = {
     snake: snakeParams,
     board: gridParams
 };
-const player = new PseudoHamiltonianCycle();
+const player = new HamiltonianCycle();
 const snake = new SnakeGame(v3d, snakeGameParams, player);
 app.register(snake);
 

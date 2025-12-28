@@ -2,13 +2,17 @@ import * as THREE from "three"
 import { Application } from "../base2/application";
 import { Viewport3D, ViewportChart } from "../base2/viewport";
 import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "./utils";
-import { HalfPseudoHamiltonianCycle, Human, PseudoHamiltonianCycle, PseudoHamiltonianPartialCycle, PseudoHamiltonianHybridCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath } from "./player";
+import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
 import { SnakeGame } from "./snakeGame";
 import { Chart, type ChartConfiguration } from "chart.js/auto";
 import { GameEvent } from "../base2/events";
 
-const playerType = [PseudoHamiltonianCycle, HalfPseudoHamiltonianCycle, PseudoHamiltonianPartialCycle, PseudoHamiltonianHybridCycle];
-const speeds = [75, 75, 75, 75];
+const playerType = [
+    HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle, HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
+];
+const speeds = [
+    30000, 30000, 30000, 30000, 30000, 30000,
+];
 
 for (let index = 0; index < playerType.length; index++) {
     const app = new Application();
@@ -16,8 +20,10 @@ for (let index = 0; index < playerType.length; index++) {
     const viewport3d = app.register(new Viewport3D());
     viewport3d.enable().append(document.body).setTitle(playerType[index].name);
 
-    const viewportChart = app.register(new ViewportChart());
-    viewportChart.enable().append(document.body).setTitle(playerType[index].name)
+    const viewportChartSize = app.register(new ViewportChart());
+    viewportChartSize.enable().append(document.body).setTitle(playerType[index].name);
+    const viewportChartSteps = app.register(new ViewportChart());
+    viewportChartSteps.enable().append(document.body).setTitle(playerType[index].name);
 
     const scene = new THREE.Scene();
 
@@ -33,17 +39,17 @@ for (let index = 0; index < playerType.length; index++) {
     viewport3d.setActiveCamera(camera).setScene(scene);
 
     const snakeParams: SnakeParameters = { speed: speeds[index] };
-    const gridParams: BoardParameters = { width: 20, height: 20 };
+    const gridParams: BoardParameters = { width: 30, height: 30 };
     const snakeGameParams: SnakeGameParameters = {
         snake: snakeParams,
         board: gridParams
     };
     const player = new playerType[index];
     const snake = new SnakeGame(viewport3d, snakeGameParams, player);
-    app.register(snake);
+    viewport3d.setApp(snake);
 
-    const config: ChartConfiguration<'line'> = {
-        type: 'line',
+    const configSteps: ChartConfiguration<'bar'> = {
+        type: 'bar',
         data: {
             datasets: [
                 {
@@ -60,15 +66,48 @@ for (let index = 0; index < playerType.length; index++) {
                         display: true,
                         text: 'Food index'
                     },
-                    ticks: {
-                        stepSize: 1,
-                    }
+                    max: snake.board.width * snake.board.height,
                 },
                 y: {
                     title: {
                         display: true,
                         text: 'Steps'
-                    }
+                    },
+                    max: snake.board.width * snake.board.height,
+                }
+            },
+            responsive: false,
+            maintainAspectRatio: false,
+            devicePixelRatio: window.devicePixelRatio
+        }
+    };
+
+    const configSize: ChartConfiguration<'line'> = {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'Size per step',
+                    pointStyle: 'false',
+                    pointRadius: 0,
+                    data: [],
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: {
+                        display: true,
+                        text: 'Steps'
+                    },
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Snake Size'
+                    },
                 }
             },
             responsive: false,
@@ -78,12 +117,17 @@ for (let index = 0; index < playerType.length; index++) {
     };
 
     viewport3d.gameEvents.subscribe((event) => {
-        const dataset = chart.data.datasets[0].data as { x: number; y: number }[];
+        const datasetSize = chartStep.data.datasets[0].data as { x: number; y: number }[];
+        const datasetSteps = chartSize.data.datasets[0].data as { x: number; y: number }[];
 
         switch (event) {
             case GameEvent.ATE:
-                dataset.push({
-                    x: dataset.length,
+                datasetSize.push({
+                    x: snake.steps,
+                    y: snake.snake.size(),
+                });
+                datasetSteps.push({
+                    x: datasetSteps.length,
                     y: snake.stepsPerFood.at(-1)!
                 });
                 break;
@@ -94,11 +138,14 @@ for (let index = 0; index < playerType.length; index++) {
         }
     })
 
-    const chart = new Chart(viewportChart.canvas, config);
-    viewportChart.setChart(chart);
+    const chartSize = new Chart(viewportChartSize.canvas, configSteps);
+    viewportChartSize.setChart(chartSize);
+
+    const chartStep = new Chart(viewportChartSteps.canvas, configSize);
+    viewportChartSteps.setChart(chartStep);
 }
 
-updateGridLayout(playerType.length * 2);
+updateGridLayout(playerType.length * 3);
 
 // function updateGridLayout(count: number) {
 //     if (count <= 0) return { cols: 1, rows: 1 };
