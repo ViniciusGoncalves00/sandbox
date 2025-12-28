@@ -73,7 +73,6 @@ export class SnakeGame implements Loopable {
     public updateSnake(direction: Vector2Int): void {
         if(!this.board.hasEmptyTile()) {
             this.viewport.gameEvents.notify(GameEvent.WIN);
-            console.log(this.steps)
             return;
         }
 

@@ -1,6 +1,6 @@
 import type { Loopable } from "./interfaces";
 
-export class Loop {
+export class Time {
     private frameID = 0;
     private previousTime: number | null = null;
     private accumulator = 0;

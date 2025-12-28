@@ -2,21 +2,142 @@ import type { SnakeGame } from "./snakeGame";
 import type { Tile } from "./tile";
 import type { Vector2Int } from "./utils";
 
+const ZERO = { x: 0, z: 0 } as const;
+const UP = { x: 0, z: 1 } as const;
+const RIGHT = { x: 1, z: 0 } as const;
+const DOWN = { x: 0, z: -1 } as const;
+const LEFT = { x: -1, z: 0 } as const;
+
+const DIRECTIONS = [
+    UP,
+    RIGHT,
+    DOWN,
+    LEFT,
+];
+
 export abstract class Player {
     protected currentDirection: Vector2Int = { x: 0, z: 0};
 
-    protected up: Vector2Int = { x: 0, z: 1 };
-    protected down: Vector2Int = { x: 0, z: -1 };
-    protected left: Vector2Int = { x: -1, z: 0 };
-    protected right: Vector2Int = { x: 1, z: 0 };
+    protected readonly UP = { x: 0, z: 1 } as const;
+    protected readonly RIGHT = { x: 1, z: 0 } as const;
+    protected readonly DOWN = { x: 0, z: -1 } as const;
+    protected readonly LEFT = { x: -1, z: 0 } as const;
 
-    protected directions: Vector2Int[] = [this.up, this.right, this.down, this.left];
+    protected readonly DIRECTIONS = [
+        this.UP,
+        this.RIGHT,
+        this.DOWN,
+        this.LEFT,
+    ];
 
     public getDirection(): Vector2Int {
         return this.currentDirection;
     }
 
     public abstract update(snakeGame: SnakeGame): void;
+
+    protected move(direction: Vector2Int): void {
+        this.currentDirection = direction;
+    }
+
+    protected getPositionInformation(game: SnakeGame): PositionInformation {
+        const { board, snake } = game;
+        const head = snake.head();
+        const food = board.getAllFood()[0].position;
+
+        const up = { x: head.x, z: head.z + 1 };
+        const right = { x: head.x + 1, z: head.z };
+        const down = { x: head.x, z: head.z - 1 };
+        const left = { x: head.x - 1, z: head.z };
+
+        return {
+            head,
+            food,
+
+            foodAbove: food.z > head.z,
+            foodAtRight: food.x > head.x,
+            foodUnder: food.z < head.z,
+            foodAtLeft: food.x < head.x,
+            foodAtSameHeight: food.z === head.z,
+            foodAtSameWidth: food.x === head.x,
+
+            atTop: head.z === board.height - 1,
+            atRight: head.x === board.width - 1,
+            atBottom: head.z === 0,
+            atLeft: head.x === 0,
+
+            oneBeforeTop: head.z === board.height - 2,
+            oneBeforeRight: head.x === board.width - 2,
+            oneBeforeLeft: head.x === 1,
+            oneBeforeBottom: head.z === 1,
+
+            canUp: board.isInside(up) && !board.hasSnake(up),
+            canRight: board.isInside(right) && !board.hasSnake(right),
+            canDown: board.isInside(down) && !board.hasSnake(down),
+            canLeft: board.isInside(left) && !board.hasSnake(left),
+        };
+    }
+}
+
+export interface PositionInformation {
+    head: Vector2Int;
+    food: Vector2Int;
+    
+    foodAbove: boolean;
+    foodAtRight: boolean;
+    foodUnder: boolean;
+    foodAtLeft: boolean;
+    foodAtSameHeight: boolean;
+    foodAtSameWidth: boolean;
+
+    atTop: boolean;
+    atRight: boolean;
+    atBottom: boolean;
+    atLeft: boolean;
+
+    oneBeforeTop: boolean;
+    oneBeforeRight: boolean;
+    oneBeforeLeft: boolean;
+    oneBeforeBottom: boolean;
+
+    canUp: boolean;
+    canRight: boolean;
+    canDown: boolean;
+    canLeft: boolean;
+}
+
+function hamiltonianCycle(info: PositionInformation): Vector2Int {
+    if (info.atTop && info.atLeft) return DOWN;
+    if (info.atBottom && !info.canUp) return RIGHT;
+    if (!info.oneBeforeTop && info.canUp) return UP;
+    if (info.oneBeforeTop && !info.canDown && info.canRight) return RIGHT;
+    if (!info.atTop && info.canDown) return DOWN;
+    if (info.oneBeforeTop && !info.canRight) return UP;
+    if (info.atTop && !info.atLeft) return LEFT;
+    return ZERO;
+}
+
+function shortcutHamiltoninanCycle(info: PositionInformation): Vector2Int {
+    if (info.atTop && info.atLeft) return DOWN;
+    if (info.atBottom && !info.canUp) return RIGHT;
+    if (!info.oneBeforeTop && info.canUp) return UP;
+    if (info.oneBeforeTop && info.foodAtLeft) return UP; //shortcut
+    if (info.oneBeforeTop && !info.canDown && info.canRight) return RIGHT;
+    if (!info.atTop && info.canDown) return DOWN;
+    if (info.oneBeforeTop && !info.canRight) return UP;
+    if (info.atTop && !info.atLeft) return LEFT;
+    return ZERO;
+}
+
+function getAndBack(info: PositionInformation): Vector2Int {
+    if (!info.atTop && info.foodAtSameHeight && info.foodAtRight && info.canRight) return RIGHT;
+    if (!info.atBottom && !info.atTop && !info.atRight && info.canDown) return DOWN;
+    if (info.atLeft && info.atTop && !info.atRight) return DOWN;
+    if (info.atBottom && !info.canUp) return RIGHT;
+    if (info.oneBeforeTop && !info.oneBeforeRight && info.canRight && info.foodAtRight) return RIGHT;
+    if (info.canUp) return UP;
+    if (info.atTop) return LEFT;
+    return ZERO;
 }
 
 export class Human extends Player {
@@ -38,10 +159,10 @@ export class Human extends Player {
     private onKeyDown(e: KeyboardEvent) {
         const key = e.key.toLowerCase();
 
-        if(key === "w") { this.currentDirection = this.currentDirection !== this.down ? this.up : this.down; }
-        if(key === "a") { this.currentDirection = this.currentDirection !== this.right ? this.left : this.right; }
-        if(key === "s") { this.currentDirection = this.currentDirection !== this.up ? this.down : this.up; }
-        if(key === "d") { this.currentDirection = this.currentDirection !== this.left ? this.right : this.left; }
+        if(key === "w") { this.currentDirection = this.currentDirection !== this.DOWN ? this.UP : this.DOWN; }
+        if(key === "a") { this.currentDirection = this.currentDirection !== this.RIGHT ? this.LEFT : this.RIGHT; }
+        if(key === "s") { this.currentDirection = this.currentDirection !== this.UP ? this.DOWN : this.UP; }
+        if(key === "d") { this.currentDirection = this.currentDirection !== this.LEFT ? this.RIGHT : this.LEFT; }
     }
 }
 
@@ -132,8 +253,8 @@ export class ShortestValidDirectionImprovedPath extends Player {
         };
 
         if (snakeGame.board.hasSnake(next) || snakeGame.board.hasSnake({
-            x: head.x + direction.x * 5,
-            z: head.z + direction.z * 5})) {
+            x: head.x + direction.x * 2,
+            z: head.z + direction.z * 2})) {
             const distances = [0, 0, 0, 0];
 
             let indexZ = 0;
@@ -171,302 +292,101 @@ export class ShortestValidDirectionImprovedPath extends Player {
 
             const maxValue = Math.max(...distances);
             const maxIndex = distances.indexOf(maxValue);
-            direction = this.directions[maxIndex];
+            direction = this.DIRECTIONS[maxIndex];
         }
 
         this.currentDirection = direction;
     }
 }
 
+// 217.000
+// 200.000
+// 200.000
 export class HamiltonianCycle extends Player {
     public update(snakeGame: SnakeGame): void {
-        const { snake, board } = snakeGame;
-        const head = snake.head();
-        
-        const atTop = head.z === board.height - 1;
-        const atBottom = head.z === 0;
-        const atLeft = head.x === 0;
-        const oneBeforeTop = head.z === board.height - 2;
-        const notInTop = head.z < board.height - 2;
-        
-        const up = { x: 0, z: 1 };
-        const right = { x: 1, z: 0 };
-        const down = { x: 0, z: -1 };
-        const left = { x: -1, z: 0 };
-        
-        const pos = {
-            up: { x: head.x, z: head.z + 1 },
-            right: { x: head.x + 1, z: head.z },
-            down: { x: head.x, z: head.z - 1 },
-        };
-    
-        const canUp = board.isInside(pos.up) && !board.hasSnake(pos.up);
-        const canRight = board.isInside(pos.right) && !board.hasSnake(pos.right);
-        const canDown = board.isInside(pos.down) && !board.hasSnake(pos.down);
-    
-        if (atTop && atLeft) { this.currentDirection = down; return; }
-        if (atTop && !atLeft) { this.currentDirection = left; return; }
-        if (notInTop && canUp) { this.currentDirection = up; return; }
-        if (oneBeforeTop && !board.isInside(pos.right)) { this.currentDirection = up; return; }
-        if (canRight && board.hasSnake(pos.down)) { this.currentDirection = right; return; }
-        if (canDown) { this.currentDirection = down; return; }
-        if (atBottom) { this.currentDirection = right;}
+        const info = this.getPositionInformation(snakeGame);
+        const direction = hamiltonianCycle(info);
+        this.move(direction);
     }
 }
 
+// 187.000
+// 182.000
+// 182.000
 export class ShortcutHamiltoninanCycle extends Player {
     public update(snakeGame: SnakeGame): void {
-        const { snake, board } = snakeGame;
-        const head = snake.head();
-        const food = board.getAllFood()[0];
-        
-        const atTop = head.z === board.height - 1;
-        const atBottom = head.z === 0;
-        const atLeft = head.x === 0;
-        const oneBeforeTop = head.z === board.height - 2;
-        const notInTop = head.z < board.height - 2;
-        
-        const up = { x: 0, z: 1 };
-        const right = { x: 1, z: 0 };
-        const down = { x: 0, z: -1 };
-        const left = { x: -1, z: 0 };
-        
-        const pos = {
-            up: { x: head.x, z: head.z + 1 },
-            right: { x: head.x + 1, z: head.z },
-            down: { x: head.x, z: head.z - 1 },
-        };
-    
-        const foodInLeftOrAbove = food.position.x < head.x;
-        const canUp = board.isInside(pos.up) && !board.hasSnake(pos.up);
-        const canRight = board.isInside(pos.right) && !board.hasSnake(pos.right);
-        const canDown = board.isInside(pos.down) && !board.hasSnake(pos.down);
-    
-        if (oneBeforeTop && foodInLeftOrAbove) { this.currentDirection = up; return; }
-        if (atTop && atLeft) { this.currentDirection = down; return; }
-        if (atTop && !atLeft) { this.currentDirection = left; return; }
-        if (notInTop && canUp) { this.currentDirection = up; return; }
-        if (oneBeforeTop && !board.isInside(pos.right)) { this.currentDirection = up; return; }
-        if (canRight && board.hasSnake(pos.down)) { this.currentDirection = right; return; }
-        if (canDown) { this.currentDirection = down; return; }
-        if (atBottom) { this.currentDirection = right;}
+        const info = this.getPositionInformation(snakeGame);
+        const direction = shortcutHamiltoninanCycle(info);
+        this.move(direction);
     }
 }
 
+// inconsistent better than simple Hamiltoninan. Sometimes 20% better, sometimes 0%, usually 10%. Somestimes, stucks.
+// 184.000
+// 176.000
+// 184.000
 export class GetAndBackHamiltonianCycle extends Player {
     public update(snakeGame: SnakeGame): void {
-        const { snake, board } = snakeGame;
-        const head = snake.head();
-        const food = board.getAllFood()[0];
+        const info = this.getPositionInformation(snakeGame);
 
-        const atTop = head.z === board.height - 1;
-        const atBottom = head.z === 0;
-        const atLeft = head.x === 0;
-        const oneBeforeTop = head.z === board.height - 2;
-        const notInTop = head.z < board.height - 2;
+        const waveHeight = snakeGame.board.height;
+        const wavesNeed = Math.floor(snakeGame.snake.size() / waveHeight);
+        const insideWave = snakeGame.snake.head().x < wavesNeed;
 
-        const waveHeight = board.height;
-        const wavesNeed = Math.floor(snake.size() / waveHeight);
-        const insideWave = head.x < wavesNeed && !atLeft;
-        
-        const up = { x: 0, z: 1 };
-        const right = { x: 1, z: 0 };
-        const down = { x: 0, z: -1 };
-        const left = { x: -1, z: 0 };
-        
-        const pos = {
-            up: { x: head.x, z: head.z + 1 },
-            right: { x: head.x + 1, z: head.z },
-            down: { x: head.x, z: head.z - 1 },
-        };
-    
-        const foodIsLeft = food.position.x < head.x;
-        const foodIsRight = head.x < food.position.x;
-        const foodIsUnder = food.position.z < head.z;
+        const direction = insideWave ? hamiltonianCycle(info) : getAndBack(info);
 
-        const canUp = board.isInside(pos.up) && !board.hasSnake(pos.up);
-        const canRight = board.isInside(pos.right) && !board.hasSnake(pos.right);
-        const canDown = board.isInside(pos.down) && !board.hasSnake(pos.down);
-
-        if(insideWave) {
-            if (atTop && atLeft) { this.currentDirection = down; return; }
-            if (atTop && !atLeft) { this.currentDirection = left; return; }
-            if (notInTop && canUp) { this.currentDirection = up; return; }
-            if (oneBeforeTop && !board.isInside(pos.right)) { this.currentDirection = up; return; }
-            if (canRight && board.hasSnake(pos.down)) { this.currentDirection = right; return; }
-            if (canDown) { this.currentDirection = down; return; }
-            if (atBottom) { this.currentDirection = right;}
-        } else {
-            if (atLeft && !atBottom) { this.currentDirection = down; return; }
-            if (!atLeft && atTop) { this.currentDirection = left; return; }
-            if (atBottom && foodIsRight) { this.currentDirection = right; return; }
-            if (atBottom && !canUp) { this.currentDirection = right; return; }
-            if (!atTop && canDown) { this.currentDirection = down; return; }
-            if (!canDown) { this.currentDirection = up; return; }
-        }
+        this.move(direction);
     }
 }
 
+// 124.000
+// 122.000
+// dead
 export class HybridGetAndBackShortcutHamiltonianCycle extends Player {
     public update(snakeGame: SnakeGame): void {
-        const { snake, board } = snakeGame;
-        const head = snake.head();
-        const food = board.getAllFood()[0];
+        const info = this.getPositionInformation(snakeGame);
 
-        const atTop = head.z === board.height - 1;
-        const atBottom = head.z === 0;
-        const atLeft = head.x === 0;
-        const oneBeforeTop = head.z === board.height - 2;
-        const notInTop = head.z < board.height - 2;
+        const waveHeight = snakeGame.board.height;
+        const wavesNeed = Math.floor(snakeGame.snake.size() / waveHeight);
+        const insideWave = snakeGame.snake.head().x < wavesNeed;
 
-        const waveHeight = board.height;
-        const wavesNeed = Math.floor(snake.size() / waveHeight);
-        const insideWave = head.x < wavesNeed && !atLeft;
-        
-        const up = { x: 0, z: 1 };
-        const right = { x: 1, z: 0 };
-        const down = { x: 0, z: -1 };
-        const left = { x: -1, z: 0 };
-        
-        const pos = {
-            up: { x: head.x, z: head.z + 1 },
-            right: { x: head.x + 1, z: head.z },
-            down: { x: head.x, z: head.z - 1 },
-        };
-    
-        const foodIsLeft = food.position.x < head.x;
-        const foodIsRight = head.x < food.position.x;
-        const foodIsUnder = food.position.z < head.z;
+        const direction = insideWave || wavesNeed > snakeGame.board.width / 2 ? shortcutHamiltoninanCycle(info) : getAndBack(info);
 
-        const canUp = board.isInside(pos.up) && !board.hasSnake(pos.up);
-        const canRight = board.isInside(pos.right) && !board.hasSnake(pos.right);
-        const canDown = board.isInside(pos.down) && !board.hasSnake(pos.down);
-
-        if(insideWave || wavesNeed > board.width / 2) {
-            if (oneBeforeTop && foodIsLeft) { this.currentDirection = up; return; }
-            if (atTop && atLeft) { this.currentDirection = down; return; }
-            if (atTop && !atLeft) { this.currentDirection = left; return; }
-            if (notInTop && canUp) { this.currentDirection = up; return; }
-            if (oneBeforeTop && !board.isInside(pos.right)) { this.currentDirection = up; return; }
-            if (canRight && board.hasSnake(pos.down)) { this.currentDirection = right; return; }
-            if (canDown) { this.currentDirection = down; return; }
-            if (atBottom) { this.currentDirection = right;}
-        } else {
-            if (atLeft && !atBottom) { this.currentDirection = down; return; }
-            if (!atLeft && atTop) { this.currentDirection = left; return; }
-            if (atBottom && foodIsRight) { this.currentDirection = right; return; }
-            if (atBottom && !canUp) { this.currentDirection = right; return; }
-            if (!atTop && canDown) { this.currentDirection = down; return; }
-            if (!canDown) { this.currentDirection = up; return; }
-        }
+        this.move(direction);
     }
 }
 
+// 172.000
+// 176.000
+// 172.000
 export class HybridShortcutHamiltonianCycle extends Player {
     public update(snakeGame: SnakeGame): void {
-        const { snake, board } = snakeGame;
-        const head = snake.head();
-        const food = board.getAllFood()[0];
+        const info = this.getPositionInformation(snakeGame);
 
-        const atTop = head.z === board.height - 1;
-        const atBottom = head.z === 0;
-        const atLeft = head.x === 0;
-        const oneBeforeTop = head.z === board.height - 2;
-        const notInTop = head.z < board.height - 2;
+        const waveHeight = snakeGame.board.height;
+        const wavesNeed = Math.floor(snakeGame.snake.size() / waveHeight);
+        const insideWave = snakeGame.snake.head().x < wavesNeed;
 
-        const waveHeight = board.height;
-        const wavesNeed = Math.floor(snake.size() / waveHeight);
-        const insideWave = head.x < wavesNeed && !atLeft;
-        
-        const up = { x: 0, z: 1 };
-        const right = { x: 1, z: 0 };
-        const down = { x: 0, z: -1 };
-        const left = { x: -1, z: 0 };
-        
-        const pos = {
-            up: { x: head.x, z: head.z + 1 },
-            right: { x: head.x + 1, z: head.z },
-            down: { x: head.x, z: head.z - 1 },
-        };
-    
-        const foodIsLeft = food.position.x < head.x;
-        const foodIsRight = head.x < food.position.x;
-        const foodIsUnder = food.position.z < head.z;
+        const direction = insideWave || wavesNeed > snakeGame.board.width / 2 ? hamiltonianCycle(info) : shortcutHamiltoninanCycle(info);
 
-        const canUp = board.isInside(pos.up) && !board.hasSnake(pos.up);
-        const canRight = board.isInside(pos.right) && !board.hasSnake(pos.right);
-        const canDown = board.isInside(pos.down) && !board.hasSnake(pos.down);
-
-        if(insideWave || wavesNeed > board.width / 2) {
-            if (atTop && atLeft) { this.currentDirection = down; return; }
-            if (atTop && !atLeft) { this.currentDirection = left; return; }
-            if (notInTop && canUp) { this.currentDirection = up; return; }
-            if (oneBeforeTop && !board.isInside(pos.right)) { this.currentDirection = up; return; }
-            if (canRight && board.hasSnake(pos.down)) { this.currentDirection = right; return; }
-            if (canDown) { this.currentDirection = down; return; }
-            if (atBottom) { this.currentDirection = right;}
-        } else {
-            if (atLeft && !atBottom) { this.currentDirection = down; return; }
-            if (!atLeft && atTop) { this.currentDirection = left; return; }
-            if (atBottom && foodIsRight) { this.currentDirection = right; return; }
-            if (atBottom && !canUp) { this.currentDirection = right; return; }
-            if (!atTop && canDown) { this.currentDirection = down; return; }
-            if (!canDown) { this.currentDirection = up; return; }
-        }
+        this.move(direction);
     }
 }
 
+// dead
+// dead
+// 118.000
 export class HybridGetAndBackHamiltonianCycle extends Player {
     public update(snakeGame: SnakeGame): void {
-        const { snake, board } = snakeGame;
-        const head = snake.head();
-        const food = board.getAllFood()[0];
+        const info = this.getPositionInformation(snakeGame);
 
-        const atTop = head.z === board.height - 1;
-        const atBottom = head.z === 0;
-        const atLeft = head.x === 0;
-        const oneBeforeTop = head.z === board.height - 2;
-        const notInTop = head.z < board.height - 2;
+        const waveHeight = snakeGame.board.height;
+        const wavesNeed = Math.floor(snakeGame.snake.size() / waveHeight);
+        const insideWave = snakeGame.snake.head().x < wavesNeed;
 
-        const waveHeight = board.height;
-        const wavesNeed = Math.floor(snake.size() / waveHeight);
-        const insideWave = head.x < wavesNeed && !atLeft;
-        
-        const up = { x: 0, z: 1 };
-        const right = { x: 1, z: 0 };
-        const down = { x: 0, z: -1 };
-        const left = { x: -1, z: 0 };
-        
-        const pos = {
-            up: { x: head.x, z: head.z + 1 },
-            right: { x: head.x + 1, z: head.z },
-            down: { x: head.x, z: head.z - 1 },
-        };
-    
-        const foodIsLeft = food.position.x < head.x;
-        const foodIsRight = head.x < food.position.x;
-        const foodIsUnder = food.position.z < head.z;
+        const direction = insideWave || wavesNeed > snakeGame.board.width / 2 ? hamiltonianCycle(info) : getAndBack(info);
 
-        const canUp = board.isInside(pos.up) && !board.hasSnake(pos.up);
-        const canRight = board.isInside(pos.right) && !board.hasSnake(pos.right);
-        const canDown = board.isInside(pos.down) && !board.hasSnake(pos.down);
-
-        if(insideWave || wavesNeed > board.width / 2) {
-            if (atTop && atLeft) { this.currentDirection = down; return; }
-            if (atTop && !atLeft) { this.currentDirection = left; return; }
-            if (notInTop && canUp) { this.currentDirection = up; return; }
-            if (oneBeforeTop && !board.isInside(pos.right)) { this.currentDirection = up; return; }
-            if (canRight && board.hasSnake(pos.down)) { this.currentDirection = right; return; }
-            if (canDown) { this.currentDirection = down; return; }
-            if (atBottom) { this.currentDirection = right;}
-        } else {
-            if (atLeft && !atBottom) { this.currentDirection = down; return; }
-            if (!atLeft && atTop) { this.currentDirection = left; return; }
-            if (atBottom && foodIsRight) { this.currentDirection = right; return; }
-            if (atBottom && !canUp) { this.currentDirection = right; return; }
-            if (!atTop && canDown) { this.currentDirection = down; return; }
-            if (!canDown) { this.currentDirection = up; return; }
-        }
+        this.move(direction);
     }
 }
 

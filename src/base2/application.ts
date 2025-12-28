@@ -1,5 +1,5 @@
 import type { Chart } from "chart.js";
-import { Loop } from "./loop";
+import { Time } from "./loop";
 import { Viewport3D } from "./viewport";
 import type { Loopable } from "./interfaces";
 
@@ -31,12 +31,12 @@ import type { Loopable } from "./interfaces";
 // }
 
 export class Application {
-    public readonly loop: Loop;
+    public readonly loop: Time;
     private viewports = new Map<string, Loopable>();
     private counter = 0;
 
     public constructor() {
-        this.loop = new Loop(this.viewports);
+        this.loop = new Time(this.viewports);
         this.loop.start();
     }
 

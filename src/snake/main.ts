@@ -8,10 +8,11 @@ import { Chart, type ChartConfiguration } from "chart.js/auto";
 import { GameEvent } from "../base2/events";
 
 const playerType = [
-    HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle, HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
+    HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,
+    HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
 ];
 const speeds = [
-    30000, 30000, 30000, 30000, 30000, 30000,
+    15000, 15000, 15000, 15000, 15000, 15000,
 ];
 
 for (let index = 0; index < playerType.length; index++) {
@@ -145,9 +146,9 @@ for (let index = 0; index < playerType.length; index++) {
     viewportChartSteps.setChart(chartStep);
 }
 
-updateGridLayout(playerType.length * 3);
+updateGrid3ColumnsLayout(playerType.length * 3);
 
-// function updateGridLayout(count: number) {
+// function updateGridAdaptativeColumnsLayout(count: number) {
 //     if (count <= 0) return { cols: 1, rows: 1 };
 
 //     const cols = Math.ceil(Math.sqrt(count));
@@ -164,19 +165,43 @@ updateGridLayout(playerType.length * 3);
 //     );
 // }
 
-function updateGridLayout(count: number) {
-    if (count <= 0) return { cols: 2, rows: 1 };
+// function updateGrid2ColumnsLayout(count: number) {
+//     if (count <= 0) return { cols: 2, rows: 1 };
+
+//     let cols = Math.ceil(Math.sqrt(count));
+
+//     if (cols % 2 !== 0) cols++;
+
+//     const rows = Math.ceil(count / cols);
+
+//     document.body.classList.remove(
+//         "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4", "grid-cols-6",
+//         "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4", "grid-rows-6"
+//     );
+
+//     document.body.classList.add(
+//         `grid-cols-${cols}`,
+//         `grid-rows-${rows}`
+//     );
+
+//     return { cols, rows };
+// }
+
+function updateGrid3ColumnsLayout(count: number) {
+    if (count <= 0) return { cols: 3, rows: 1 };
 
     let cols = Math.ceil(Math.sqrt(count));
 
-    // força número par
-    if (cols % 2 !== 0) cols++;
+    // força múltiplo de 3
+    cols = Math.ceil(cols / 3) * 3;
 
     const rows = Math.ceil(count / cols);
 
     document.body.classList.remove(
-        "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4", "grid-cols-6",
-        "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4", "grid-rows-6"
+        "grid-cols-1", "grid-cols-2", "grid-cols-3",
+        "grid-cols-4", "grid-cols-6", "grid-cols-9",
+        "grid-rows-1", "grid-rows-2", "grid-rows-3",
+        "grid-rows-4", "grid-rows-6", "grid-rows-9"
     );
 
     document.body.classList.add(
