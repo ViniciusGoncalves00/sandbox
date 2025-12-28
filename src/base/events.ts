@@ -1,12 +1,19 @@
 export type Event =
-| FinishEvent
 | MatchEvent
+| GameEvent
 | LoopEvent;
 
-export enum FinishEvent {
+// export enum FinishEvent {
+//     WIN,
+//     DRAW,
+//     LOSE,
+// }
+
+export enum GameEvent {
     WIN,
     DRAW,
     LOSE,
+    ATE,
 }
 
 export enum MatchEvent {

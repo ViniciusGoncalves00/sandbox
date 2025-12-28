@@ -3,10 +3,10 @@ import { Board } from "./board";
 import type { SnakeGameParameters, Vector2Int } from "./utils";
 import { Camera, Scene, Vector3 } from "three";
 import type { Player } from "./player";
-import { Base, BaseObject } from "../base2/base";
-import type { Viewport3D } from "../base2/viewport";
-import { GameEvent } from "../base2/events";
-import type { Loopable } from "../base2/interfaces";
+import { Base, BaseObject } from "../base/base";
+import type { Viewport3D } from "../base/viewport";
+import { GameEvent } from "../base/events";
+import type { Loopable } from "../base/interfaces";
 
 export class SnakeGame implements Loopable {
     public readonly board: Board;

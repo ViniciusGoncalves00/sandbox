@@ -1,11 +1,11 @@
 import * as THREE from "three"
-import { Application } from "../base2/application";
-import { Viewport3D, ViewportChart } from "../base2/viewport";
+import { Application } from "../base/application";
+import { Viewport3D, ViewportChart } from "../base/viewport";
 import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "./utils";
 import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
 import { SnakeGame } from "./snakeGame";
 import { Chart, type ChartConfiguration } from "chart.js/auto";
-import { GameEvent } from "../base2/events";
+import { GameEvent } from "../base/events";
 
 const playerType = [
     HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,

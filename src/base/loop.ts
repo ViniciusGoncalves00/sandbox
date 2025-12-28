@@ -1,39 +1,25 @@
-export class Loop {
-    private frameID: number = 0;
+import type { Loopable } from "./interfaces";
+
+export class Time {
+    private frameID = 0;
     private previousTime: number | null = null;
-    private accumulator: number = 0;
-    private fixedRateMS: number = 33.33;
+    private accumulator = 0;
+    private fixedRate = 1 / 30;
 
-    private readonly updatables = new Set<(deltaTime: number) => void>();
-    private readonly fixedUpdatables = new Set<() => void>();
+    private loopables: Map<string, Loopable>;
 
-    public constructor() {
+    public constructor(loopables: Map<string, Loopable>) {
+        this.loopables = loopables;
         this.loop = this.loop.bind(this);
-    }
-
-    public add(func: (deltaTime: number) => void): void {
-        this.updatables.add(func);
-    }
-
-    public addFixed(func: () => void): void {
-        this.fixedUpdatables.add(func);
-    }
-
-    public remove(func: (deltaTime: number) => void): void {
-        this.updatables.delete(func);
-    }
-
-    public removeFixed(func: () => void): void {
-        this.updatables.delete(func);
-    }
-
-    public stop(): void {
-        this.previousTime = null;
-        cancelAnimationFrame(this.frameID);
     }
 
     public start(): void {
         requestAnimationFrame(this.loop);
+    }
+
+    public stop(): void {
+        cancelAnimationFrame(this.frameID);
+        this.previousTime = null;
     }
 
     private loop(now: number): void {
@@ -44,19 +30,15 @@ export class Loop {
             return;
         }
 
-        const deltaTime = now - this.previousTime;
+        const deltaTime = (now - this.previousTime) / 1000;
         this.previousTime = now;
         this.accumulator += deltaTime;
 
-        for (const func of this.updatables) {
-            func(deltaTime);
-        }
+        this.loopables.forEach(l => l.update(deltaTime));
 
-        while (this.accumulator >= this.fixedRateMS) {
-            for (const func of this.fixedUpdatables) {
-                func();
-            }
-            this.accumulator -= this.fixedRateMS;
+        while (this.accumulator >= this.fixedRate) {
+            this.loopables.forEach(l => l.fixedUpdate());
+            this.accumulator -= this.fixedRate;
         }
     }
 }
