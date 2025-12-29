@@ -1,44 +1,104 @@
-import type { Loopable } from "./interfaces";
+import { EventSystem } from "./event-system";
+import { LoopEvent, TabBehavior } from "./events";
 
 export class Time {
-    private frameID = 0;
-    private previousTime: number | null = null;
-    private accumulator = 0;
-    private fixedRate = 1 / 30;
+    public static events: EventSystem<LoopEvent> = new EventSystem();
 
-    private loopables: Map<string, Loopable>;
+    private static frameID: number = 0;
+    private static previousUpdate: number | null = null;
+    private static fixedDelta: number = 1 / 50;
+    private static accumulator: number = 0;
+    private static delta: number = 0;
+    
+    private static running: boolean = false;
+    private static visibilityListenerAttached: boolean = false;
+    private static tabBehavior: TabBehavior = TabBehavior.PauseAndResume;
 
-    public constructor(loopables: Map<string, Loopable>) {
-        this.loopables = loopables;
-        this.loop = this.loop.bind(this);
-    }
+    private constructor() {}
 
-    public start(): void {
+    public static start(): void {
+        if (this.running) return;
+
+        this.running = true;
+        this.previousUpdate = null;
+
+        this.attachVisibilityListener();
         requestAnimationFrame(this.loop);
     }
 
-    public stop(): void {
+    public static stop(): void {
+        if (!this.running) return;
+
+        this.running = false;
         cancelAnimationFrame(this.frameID);
-        this.previousTime = null;
     }
 
-    private loop(now: number): void {
+    public static setFixedRate(hz: number): Time {
+        this.fixedDelta = 1 / hz;
+        return this;
+    }
+
+    public static setTabBehavior(behavior: TabBehavior): Time {
+        this.tabBehavior = behavior;
+        this.attachVisibilityListener();
+        return this;
+    }
+
+    public static deltaTime(): number {
+        return this.delta;
+    }
+
+    public static reset(): void {
+        this.previousUpdate = null;
+        this.accumulator = 0;
+    }
+
+    private static attachVisibilityListener(): void {
+        if (this.visibilityListenerAttached) return;
+
+        document.addEventListener("visibilitychange", this.onVisibilityChange);
+        this.visibilityListenerAttached = true;
+    }
+
+    private static onVisibilityChange = (): void => {
+        switch (this.tabBehavior) {
+            case TabBehavior.Continue:
+                break;
+            case TabBehavior.PauseAndResume:
+                if (document.hidden) {
+                    this.stop();
+                } else {
+                    this.start();
+                }
+                break;
+            case TabBehavior.Pause:
+                if (document.hidden) {
+                    this.stop();
+                }
+                break;
+        }
+    };
+
+    private static loop = (now: number): void => {
+        if (!this.running) return;
+
         this.frameID = requestAnimationFrame(this.loop);
 
-        if (this.previousTime === null) {
-            this.previousTime = now;
+        if (this.previousUpdate === null) {
+            this.previousUpdate = now;
             return;
         }
 
-        const deltaTime = (now - this.previousTime) / 1000;
-        this.previousTime = now;
-        this.accumulator += deltaTime;
+        this.delta = (now - this.previousUpdate) / 1000;
+        console.log(this.delta)
+        this.previousUpdate = now;
+        this.accumulator += this.delta;
 
-        this.loopables.forEach(l => l.update(deltaTime));
+        this.events.notify(LoopEvent.Update);
 
-        while (this.accumulator >= this.fixedRate) {
-            this.loopables.forEach(l => l.fixedUpdate());
-            this.accumulator -= this.fixedRate;
+        while (this.accumulator >= this.fixedDelta) {
+            this.accumulator -= this.fixedDelta;
+            this.events.notify(LoopEvent.FixedUpdate);
         }
-    }
+    };
 }
