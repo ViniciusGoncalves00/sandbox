@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import { Application } from "./application";
-import { Viewport3D, ViewportChart } from "./viewport";
+import { Context3D, ContextChart } from "./viewport";
 import Chart, { type ChartConfiguration } from 'chart.js/auto'
 import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "../snake/utils";
 import { HamiltonianCycle, ShortestValidDirectionImprovedPath } from "../snake/player";
@@ -9,11 +9,11 @@ import { GameEvent } from "./events";
 
 const app = new Application();
 
-const v3d = app.register(new Viewport3D());
+const v3d = app.register(new Context3D());
 v3d.enable();
 v3d.append(document.body);
 
-const vChart = app.register(new ViewportChart());
+const vChart = app.register(new ContextChart());
 vChart.append(document.body);
 vChart.enable();
 

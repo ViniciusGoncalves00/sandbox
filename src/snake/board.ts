@@ -1,167 +1,132 @@
-import { BoxGeometry, Mesh, MeshPhongMaterial } from "three/webgpu";
-import { Tile } from "./tile";
-import { type BoardParameters, type Vector2Int } from "./utils";
+import { type Vector2Int, TileState } from "./utils";
 
 export class Board {
-    public readonly width: number
-    public readonly height: number
+    public readonly width: number;
+    public readonly height: number;
+    public readonly size: number;
 
-    private readonly emptyTiles: Map<string, Tile> = new Map();
-    private readonly snakeTiles: Map<string, Tile> = new Map();
-    private readonly foodTiles: Map<string, Tile> = new Map();
+    private readonly grid: TileState[];
+    private readonly snake: number[];
+    private foodIndex: number;
 
-    public constructor(params: BoardParameters) {
-        this.width = params.width;
-        this.height = params.height;
+    public constructor(width: number, height: number, initialSnake: Vector2Int[]) {
+        this.width = width;
+        this.height = height;
+        this.size = height * width;
 
-        const geometry = new BoxGeometry();
-        const material = new MeshPhongMaterial({wireframe: true});
-        const mesh = new Mesh(geometry, material);
+        this.grid = new Array(this.size).fill(TileState.Empty);
+        this.snake = [];
 
-        for (let x = 0; x < params.width; x++) {
-            for (let z = 0; z < params.height; z++) {
-                const clone = mesh.clone();
-                clone.position.set(x, 0, z);
-                
-                const key = this.index2key({x, z});
-                const tile = new Tile(clone, {x: x, z: z});
-                this.emptyTiles.set(key, tile);
-            }
+        for (const position of initialSnake) {
+            const index = this.coordinates2Index(position);
+            this.snake.push(index);
+            this.grid[index] = TileState.Snake;
         }
+
+        this.foodIndex = this.spawnFood();
     }
 
-    public get(position: Vector2Int): Tile | undefined {
-        const key = this.index2key(position);
-        if(this.emptyTiles.has(key)) return this.emptyTiles.get(key);
-        if(this.snakeTiles.has(key)) return this.snakeTiles.get(key);
-        if(this.foodTiles.has(key)) return this.foodTiles.get(key);
+    public getTile(position: Vector2Int): TileState {
+        return this.grid[this.coordinates2Index(position)];
     }
 
-    public getAll(): Tile[] {
-        return [
-            ...this.emptyTiles.values().toArray(),
-            ...this.snakeTiles.values().toArray(),
-            ...this.foodTiles.values().toArray(),
-        ]
+    //#region COMPARASIONS
+    public isInside({ x, y }: Vector2Int): boolean {
+        return x >= 0 && y >= 0 && x < this.width && y < this.height;
+    }
+    
+    public isSnake(position: Vector2Int): boolean {
+        return this.getTile(position) === TileState.Snake;
     }
 
-    public getAllEmpty(): Tile[] {
-        return this.emptyTiles.values().toArray()
+    public isSnakeHead(position: Vector2Int): boolean {
+        return this.isEquals(position, this.getHead());
     }
 
-    public getAllSnake(): Tile[] {
-        return this.snakeTiles.values().toArray()
+    public isSnakeTail(position: Vector2Int): boolean {
+        return this.isEquals(position, this.getTail());
     }
 
-    public getAllFood(): Tile[] {
-        return this.foodTiles.values().toArray()
-    }
-
-    public isInside(position: Vector2Int): boolean {
-        return this.get(position) === undefined ? false : true;
-    }
-
-    public getEmptyTile(position: Vector2Int): Tile | undefined {
-        const key = this.index2key(position);
-        return this.emptyTiles.get(key);
-    }
-
-    public getSnakeTile(position: Vector2Int): Tile | undefined {
-        const key = this.index2key(position);
-        return this.snakeTiles.get(key);
-    }
-
-    public getFoodTile(position: Vector2Int): Tile | undefined {
-        const key = this.index2key(position);
-        return this.foodTiles.get(key);
-    }
-
-    // public nearestFood(position: Vector2Int): Tile | undefined {
-    //     const key = this.index2key(position);
-
-    //     let nearestFood: Tile;
-
-    //     this.foodTiles.keys().forEach(key => {
-    //         const pos = this.key2index(key);
-    //     })
-    // }
-
-    public hasEmptyTile(): boolean {
-        return this.emptyTiles.size > 0;
-    }
-
-    public hasFood(position: Vector2Int): boolean {
-        const key = this.index2key(position);
-        return this.foodTiles.has(key);
-    }
-
-    public hasSnake(position: Vector2Int): boolean {
-        const key = this.index2key(position);
-        return this.snakeTiles.has(key);
+    public isFood(position: Vector2Int): boolean {
+        return this.getTile(position) === TileState.Food;
     }
 
     public isEmpty(position: Vector2Int): boolean {
-        const key = this.index2key(position);
-        return this.emptyTiles.has(key);
+        return this.getTile(position) === TileState.Empty;
+    }
+    
+    public isEquals(a: Vector2Int, b: Vector2Int): boolean {
+        return a.x === b.x && a.y === b.y;
+    }
+    //#endregion
+
+    //#region SNAKE
+    public getSnake(): Vector2Int[] {
+        return this.snake.map(index => this.index2Coordinates(index));
     }
 
-    public setSnake(position: Vector2Int): void {
-        const key = this.index2key(position);
-        if(!this.emptyTiles.has(key) && !this.foodTiles.has(key)) return;
-
-        const tile = this.emptyTiles.get(key)! ?? this.foodTiles.get(key)!;
-        this.snakeTiles.set(key, tile);
-        tile.setSnake();
-        
-        if(this.emptyTiles.has(key)) this.emptyTiles.delete(key);
-        if(this.foodTiles.has(key)) this.foodTiles.delete(key);
+    public getHead(): Vector2Int {
+        return this.index2Coordinates(this.snake[0]);
     }
 
-    public setEmpty(position: Vector2Int): void {
-        const key = this.index2key(position);
-        if(!this.snakeTiles.has(key) && !this.foodTiles.has(key)) return;
-
-        const tile = this.snakeTiles.get(key)! ?? this.foodTiles.get(key)!;
-        this.emptyTiles.set(key, tile);
-        tile.setEmpty();
-
-        if(this.snakeTiles.has(key)) this.snakeTiles.delete(key);
-        if(this.foodTiles.has(key)) this.foodTiles.delete(key);
+    public getTail(): Vector2Int {
+        return this.index2Coordinates(this.snake[this.snake.length - 1]);
     }
 
-    public index2key(position: Vector2Int): string {
-        return `${position.x},${position.z}`
+    public snakeSize(): number {
+        return this.snake.length;
     }
+    
+    public moveSnake(newHead: Vector2Int, moveTail: boolean = true): void {
+        const headIndex = this.coordinates2Index(newHead);
 
-    public key2index(key: string): Vector2Int {
-        const [x, z] = key.split(",");
-        return {x: parseFloat(x), z: parseFloat(z)}
+        this.snake.unshift(headIndex);
+        this.grid[headIndex] = TileState.Snake;
+
+        if (moveTail) {
+            const tailIndex = this.snake.pop()!;
+            this.grid[tailIndex] = TileState.Empty;
+        }
+    }
+    //#endregion
+    
+    //#region FOOD
+    public getFood(): Vector2Int {
+        return this.index2Coordinates(this.foodIndex);
     }
 
     public newFood(): void {
-        if(!this.hasEmptyTile()) return;
+        this.foodIndex = this.spawnFood();
+    }
 
-        let position: Vector2Int
-        let key: string;
-        do {
-            position =  {
-                x: Math.floor(Math.random() * this.width),
-                z: Math.floor(Math.random() * this.height),
+    private spawnFood(): number {
+        const empties: number[] = [];
+
+        for (let i = 0; i < this.grid.length; i++) {
+            if (this.grid[i] === TileState.Empty) {
+                empties.push(i);
             }
-            key = this.index2key(position);
-        } while (!this.emptyTiles.has(key));
+        }
 
-        this.setFood(position);
+        if (empties.length === 0) return -1;
+
+        const emptyIndex = Math.floor(Math.random() * empties.length);
+        const index = empties[emptyIndex];
+        this.grid[index] = TileState.Food;
+        return index;
+    }
+    //#endregion
+
+    //#region CONVERSIONS
+    private coordinates2Index({ x, y }: Vector2Int): number {
+        return y * this.width + x;
     }
 
-    private setFood(position: Vector2Int): void {
-        const key = this.index2key(position);
-        if(!this.emptyTiles.has(key) || this.snakeTiles.has(key)) return;
-
-        const tile = this.emptyTiles.get(key)!;
-        this.foodTiles.set(key, tile);
-        tile.setFood();
-
-        this.emptyTiles.delete(key);
+    private index2Coordinates(index: number): Vector2Int {
+        return {
+            x: index % this.width,
+            y: Math.floor(index / this.width),
+        };
     }
+    //#endregion
 }

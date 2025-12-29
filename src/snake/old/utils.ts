@@ -10,7 +10,6 @@ export interface SnakeGameParameters {
 
 export interface SnakeParameters {
     speed: number;
-    initial: Vector2Int[];
 }
 
 export interface BoardParameters {

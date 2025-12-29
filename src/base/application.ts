@@ -1,6 +1,6 @@
 import type { Chart } from "chart.js";
-import { Time } from "./loop";
-import { Viewport3D } from "./viewport";
+import { Time } from "./time";
+import { Context3D } from "./viewport";
 import type { Loopable } from "./interfaces";
 
 // export class Application {

@@ -5,7 +5,7 @@ import type { GameEvent, LoopEvent } from "./events";
 import type { Loopable } from "./interfaces";
 import type { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.js";
 
-export abstract class Viewport<T> {
+export abstract class Context<T> {
     protected enabled: boolean = false;
     
     public wrapper: HTMLElement;
@@ -35,7 +35,7 @@ export abstract class Viewport<T> {
         this.resizeObserver.observe(this.wrapper);
     }
 
-    protected resize(): Viewport<T> {
+    protected resize(): Context<T> {
         const rect = this.canvas.getBoundingClientRect();
 
         const width = Math.floor(rect.width);
@@ -49,22 +49,22 @@ export abstract class Viewport<T> {
         return this;
     }
 
-    public setTitle(name: string): Viewport<T> { this.title.textContent = name.split(/(?=[A-Z])/).join(" "); return this; }
+    public setTitle(name: string): Context<T> { this.title.textContent = name.split(/(?=[A-Z])/).join(" "); return this; }
 
-    public enable(): Viewport<T> { this.enabled = true; return this; }
-    public disable(): Viewport<T> { this.enabled = false; return this; }
+    public enable(): Context<T> { this.enabled = true; return this; }
+    public disable(): Context<T> { this.enabled = false; return this; }
 
-    public append(element: HTMLElement): Viewport<T> { element.appendChild(this.wrapper); return this; }
-    public remove(element: HTMLElement): Viewport<T> { element.removeChild(this.wrapper); return this; }
+    public append(element: HTMLElement): Context<T> { element.appendChild(this.wrapper); return this; }
+    public remove(element: HTMLElement): Context<T> { element.removeChild(this.wrapper); return this; }
 
-    public hide(): Viewport<T> { this.wrapper.classList.add("hidden"); return this; }
-    public show(): Viewport<T> { this.wrapper.classList.remove("hidden"); return this; }
+    public hide(): Context<T> { this.wrapper.classList.add("hidden"); return this; }
+    public show(): Context<T> { this.wrapper.classList.remove("hidden"); return this; }
 
-    protected showAdvise(): Viewport<T> { this.errorMessage.classList.remove("hidden"); return this; }
-    protected hideAdvise(): Viewport<T> { this.errorMessage.classList.add("hidden"); return this; }
+    protected showAdvise(): Context<T> { this.errorMessage.classList.remove("hidden"); return this; }
+    protected hideAdvise(): Context<T> { this.errorMessage.classList.add("hidden"); return this; }
 }
 
-export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
+export class Context3D extends Context<Context3D> implements Loopable {
     public readonly renderer: THREE.WebGPURenderer;
     private _camera: THREE.Camera | null = null;
     public get camera() { return this._camera };
@@ -87,25 +87,25 @@ export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
         this.setScene(null);
     }
 
-    public setActiveCamera(camera: THREE.Camera | null): Viewport3D {
+    public setActiveCamera(camera: THREE.Camera | null): Context3D {
         this._camera = camera;
         camera === null ? this.showAdvise() : this.hideAdvise();
         return this;
     }
 
-    public setScene(scene: THREE.Scene | null): Viewport3D {
+    public setScene(scene: THREE.Scene | null): Context3D {
         this._scene = scene;
         scene === null ? this.showAdvise() : this.hideAdvise();
         return this;
     }
 
-    public setApp(app: Loopable | null): Viewport3D {
+    public setApp(app: Loopable | null): Context3D {
         this.app = app;
         app === null ? this.showAdvise() : this.hideAdvise();
         return this;
     }
 
-    protected resize(): Viewport3D {
+    protected resize(): Context3D {
         super.resize();
 
         const width = this.canvas.width;
@@ -136,7 +136,7 @@ export class Viewport3D extends Viewport<Viewport3D> implements Loopable {
     }
 }
 
-export class ViewportChart extends Viewport<Chart> implements Loopable {
+export class ContextChart extends Context<ContextChart> implements Loopable {
     private chart: Chart | null = null;
 
     public constructor(){
@@ -145,7 +145,7 @@ export class ViewportChart extends Viewport<Chart> implements Loopable {
         this.errorMessage.textContent = "There is no chart to render";
     }
 
-    public setChart(chart: Chart | null): ViewportChart {
+    public setChart(chart: Chart | null): ContextChart {
         this.chart = chart;
 
         if (chart) {
@@ -164,7 +164,7 @@ export class ViewportChart extends Viewport<Chart> implements Loopable {
 
     public fixedUpdate(): void {}
 
-    protected resize(): ViewportChart {
+    protected resize(): ContextChart {
         super.resize();
 
         this.chart?.resize();

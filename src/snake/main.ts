@@ -1,29 +1,30 @@
 import * as THREE from "three"
 import { Application } from "../base/application";
-import { Viewport3D, ViewportChart } from "../base/viewport";
-import type { BoardParameters, SnakeGameParameters, SnakeParameters } from "./utils";
+import { Context3D, ContextChart } from "../base/viewport";
+import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./utils";
 import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
 import { SnakeGame } from "./snakeGame";
 import { Chart, type ChartConfiguration } from "chart.js/auto";
 import { GameEvent } from "../base/events";
+import { ThreeBoardRenderer } from "./renderer";
 
 const playerType = [
     HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,
     HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
 ];
 const speeds = [
-    15000, 15000, 15000, 15000, 15000, 15000,
+    150, 150, 150, 150, 150, 150,
 ];
 
 for (let index = 0; index < playerType.length; index++) {
     const app = new Application();
 
-    const viewport3d = app.register(new Viewport3D());
+    const viewport3d = app.register(new Context3D());
     viewport3d.enable().append(document.body).setTitle(playerType[index].name);
 
-    const viewportChartSize = app.register(new ViewportChart());
+    const viewportChartSize = app.register(new ContextChart());
     viewportChartSize.enable().append(document.body).setTitle(playerType[index].name);
-    const viewportChartSteps = app.register(new ViewportChart());
+    const viewportChartSteps = app.register(new ContextChart());
     viewportChartSteps.enable().append(document.body).setTitle(playerType[index].name);
 
     const scene = new THREE.Scene();
@@ -39,14 +40,21 @@ for (let index = 0; index < playerType.length; index++) {
 
     viewport3d.setActiveCamera(camera).setScene(scene);
 
-    const snakeParams: SnakeParameters = { speed: speeds[index] };
-    const gridParams: BoardParameters = { width: 30, height: 30 };
+    const head: Vector2Int = { x: 1, y: 2};
+    const tail: Vector2Int = { x: 1, y: 1};
+    const initialSnake: Vector2Int[] = [head, tail]
+
+    const snakeParams: SnakeParameters = { speed: speeds[index], initial: initialSnake};
+    const gridParams: BoardParameters = { width: 10, height: 10 };
     const snakeGameParams: SnakeGameParameters = {
         snake: snakeParams,
         board: gridParams
     };
     const player = new playerType[index];
-    const snake = new SnakeGame(viewport3d, snakeGameParams, player);
+
+    const renderer = new ThreeBoardRenderer(scene);
+    const snake = new SnakeGame(snakeGameParams, player, viewport3d.gameEvents, renderer);
+    renderer.init(snake.board);
     viewport3d.setApp(snake);
 
     const configSteps: ChartConfiguration<'bar'> = {
@@ -125,7 +133,7 @@ for (let index = 0; index < playerType.length; index++) {
             case GameEvent.ATE:
                 datasetSize.push({
                     x: snake.steps,
-                    y: snake.snake.size(),
+                    y: snake.board.snakeSize(),
                 });
                 datasetSteps.push({
                     x: datasetSteps.length,
@@ -133,6 +141,10 @@ for (let index = 0; index < playerType.length; index++) {
                 });
                 break;
             case GameEvent.WIN:
+                console.log("WIN")
+                viewport3d.disable();
+            case GameEvent.LOSE:
+                console.log("LOSE")
                 viewport3d.disable();
             default:
                 break;
