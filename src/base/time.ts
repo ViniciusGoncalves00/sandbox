@@ -90,7 +90,6 @@ export class Time {
         }
 
         this.delta = (now - this.previousUpdate) / 1000;
-        console.log(this.delta)
         this.previousUpdate = now;
         this.accumulator += this.delta;
 
