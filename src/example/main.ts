@@ -1,17 +1,23 @@
-// import * as THREE from "three"
-// import { Application } from "./application";
+import { Program } from "../base/program";
+import { Viewport } from "../base/viewport";
+import { Example } from "./example";
+import { ExampleCanvas2DRenderer } from "./example2DRenderer";
+import { ExampleThreeJSRenderer } from "./ExampleThreeJSRenderer";
 
-// const geometry = new THREE.BoxGeometry(10, 10, 10);
-// const materialParameters: THREE.MeshBasicMaterialParameters = {
-//     color: new THREE.Color("white")
-// }
-// const material = new THREE.MeshBasicMaterial(materialParameters);
-// const mesh = new THREE.Mesh(geometry, material);
+const example = new Example();
 
-// const scene = new THREE.Scene();
-// scene.add(mesh);
+Program.instance()
+    .createContext()
+    .setApplication(example)
+    .setViewport(new Viewport(new ExampleThreeJSRenderer(example), document.getElementById("threeJS")!));
+
+Program.instance()
+    .createContext()
+    .setApplication(example)
+    .setViewport(new Viewport(new ExampleCanvas2DRenderer(example), document.getElementById("canvas2D")!));
 
 // const project = new Application();
+// project.register()
 // const viewports = project.createViewports(4);
 // viewports.forEach(viewport => {
 //     viewport.append(document.body);

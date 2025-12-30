@@ -1,24 +1,22 @@
 import type { Event } from "./events";
 
 export class EventSystem<T extends Event> {
-    private handlers: Set<(event: T) => void> = new Set();
-    
-    public constructor() {}
+    private listeners: Set<(event: T) => void> = new Set();
 
     public notify(event: T): void {
-        for (const handler of this.handlers) handler(event);
+        for (const handler of this.listeners) handler(event);
     }
 
-    public subscribe(handler: (event: T) => void): () => void {
-        this.handlers.add(handler);
-        return () => this.unsubscribe(handler);
+    public subscribe(listener: (event: T) => void): () => void {
+        this.listeners.add(listener);
+        return () => this.unsubscribe(listener);
     }
 
-    public unsubscribe(handler: (event: T) => void): void {
-        this.handlers.delete(handler);
+    public unsubscribe(listener: (event: T) => void): void {
+        this.listeners.delete(listener);
     }
 
     public clear(): void {
-        this.handlers.clear();
+        this.listeners.clear();
     }
 }

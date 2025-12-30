@@ -2,7 +2,9 @@ import { EventSystem } from "./event-system";
 import { LoopEvent, TabBehavior } from "./events";
 
 export class Time {
-    public static events: EventSystem<LoopEvent> = new EventSystem();
+    public static update: EventSystem<LoopEvent.Update> = new EventSystem();
+    public static fixedUpdate: EventSystem<LoopEvent.FixedUpdate> = new EventSystem();
+    public static lateUpdate: EventSystem<LoopEvent.LateUpdate> = new EventSystem();
 
     private static frameID: number = 0;
     private static previousUpdate: number | null = null;
@@ -93,11 +95,13 @@ export class Time {
         this.previousUpdate = now;
         this.accumulator += this.delta;
 
-        this.events.notify(LoopEvent.Update);
+        this.update.notify(LoopEvent.Update);
 
         while (this.accumulator >= this.fixedDelta) {
             this.accumulator -= this.fixedDelta;
-            this.events.notify(LoopEvent.FixedUpdate);
+            this.fixedUpdate.notify(LoopEvent.FixedUpdate);
         }
+
+        this.lateUpdate.notify(LoopEvent.LateUpdate);
     };
 }

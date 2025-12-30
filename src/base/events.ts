@@ -25,6 +25,15 @@ export enum MatchEvent {
 }
 
 export enum LoopEvent {
-    START,
-    STOP,
+    Start,
+    Stop,
+    Update,
+    FixedUpdate,
+    LateUpdate,
+}
+
+export enum TabBehavior {
+    Continue,
+    PauseAndResume,
+    Pause
 }

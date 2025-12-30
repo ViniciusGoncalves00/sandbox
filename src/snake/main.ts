@@ -1,6 +1,6 @@
 import * as THREE from "three"
-import { Application } from "../base/application";
-import { Context3D, ContextChart } from "../base/viewport";
+import { Program } from "../base/program";
+import { Viewport3D, ViewportChart } from "../base/viewport";
 import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./utils";
 import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
 import { SnakeGame } from "./snakeGame";
@@ -17,14 +17,14 @@ const speeds = [
 ];
 
 for (let index = 0; index < playerType.length; index++) {
-    const app = new Application();
+    const app = new Program();
 
-    const viewport3d = app.register(new Context3D());
+    const viewport3d = app.register(new Viewport3D());
     viewport3d.enable().append(document.body).setTitle(playerType[index].name);
 
-    const viewportChartSize = app.register(new ContextChart());
+    const viewportChartSize = app.register(new ViewportChart());
     viewportChartSize.enable().append(document.body).setTitle(playerType[index].name);
-    const viewportChartSteps = app.register(new ContextChart());
+    const viewportChartSteps = app.register(new ViewportChart());
     viewportChartSteps.enable().append(document.body).setTitle(playerType[index].name);
 
     const scene = new THREE.Scene();
