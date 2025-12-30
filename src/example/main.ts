@@ -7,17 +7,19 @@ import { ExampleThreeJSRenderer } from "./ExampleThreeJSRenderer";
 
 const example = new Example();
 
-Program.instance()
+const program = new Program();
+
+program
     .createContext()
     .setApplication(example)
     .setViewport(new Viewport(new ExampleThreeJSRenderer(example), document.getElementById("threeJS")!));
 
-Program.instance()
+program
     .createContext()
     .setApplication(example)
     .setViewport(new Viewport(new ExampleCanvas2DRenderer(example), document.getElementById("canvas2D")!));
 
-Program.instance()
+program
     .createContext()
     .setApplication(example)
     .setViewport(new Viewport(new ExampleChartJSRenderer(example), document.getElementById("chartJS")!));

@@ -1,3 +1,5 @@
+import type { Application } from "./application";
+
 export abstract class Renderer<T extends Application> {
     protected application: T;
 
@@ -41,7 +43,6 @@ export abstract class Canvas2DRenderer<T extends Application> extends Renderer<T
 }
 
 import * as THREE from "three";
-import type { Application } from "./application";
 
 export abstract class ThreeJSRenderer<T extends Application> extends Renderer<T> {
     protected renderer!: THREE.WebGLRenderer;

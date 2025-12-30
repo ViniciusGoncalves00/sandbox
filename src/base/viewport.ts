@@ -5,7 +5,7 @@ export class Viewport<T extends Application> {
     private renderer: Renderer<T>;
     private container: HTMLElement;
 
-    constructor(
+    public constructor(
         renderer: Renderer<T>,
         container: HTMLElement,
     ) {

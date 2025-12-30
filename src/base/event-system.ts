@@ -4,7 +4,7 @@ export class EventSystem<T extends Event> {
     private listeners: Set<(event: T) => void> = new Set();
 
     public notify(event: T): void {
-        for (const handler of this.listeners) handler(event);
+        for (const listener of this.listeners) listener(event);
     }
 
     public subscribe(listener: (event: T) => void): () => void {

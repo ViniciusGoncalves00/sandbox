@@ -1,25 +1,18 @@
 import { Time } from "./time";
 import { Context } from "./context";
+import type { Application } from "./application";
 
-export class Program {
-    private static _instance: Program;
-    private contexts: Map<number, Context> = new Map();
+export class Program<T extends Application> {
+    private contexts: Map<number, Context<T>> = new Map();
     private counter: number = 0;
 
-    private constructor() {
+    public constructor() {
         Time.start();
     }
 
-    public static instance(): Program {
-        if(!this._instance) {
-            this._instance = new Program();
-        }
-        return this._instance;
-    };
+    public createContext(): Context<T> {
+        const context = new Context<T>();
 
-    public createContext(): Context {
-        const context = new Context();
-        
         Time.update.subscribe(() => context.application?.update());
         Time.fixedUpdate.subscribe(() => context.application?.fixedUpdate());
         Time.lateUpdate.subscribe(() => context.application?.lateUpdate());
@@ -30,8 +23,8 @@ export class Program {
         return context;
     }
     
-    public createContexts(amount: number): Context[] {
-        const contexts: Context[] = [];
+    public createContexts(amount: number): Context<T>[] {
+        const contexts: Context<T>[] = [];
         for (let index = 0; index < amount; index++) {
             const context = this.createContext();
             contexts.push(context);
