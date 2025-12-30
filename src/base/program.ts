@@ -39,18 +39,3 @@ export class Program {
         return contexts;
     }
 }
-
-// export class Application {
-//     private viewports = new Map<string, Loopable>();
-//     private counter = 0;
-
-//     public constructor() {
-//         Time.start();
-//     }
-
-//     public register<T extends Loopable>(viewport: T): T {
-//         this.viewports.set(this.counter.toString(), viewport);
-//         this.counter++;
-//         return viewport;
-//     }
-// }

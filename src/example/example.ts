@@ -8,6 +8,6 @@ export class Example extends Application {
 
     public update(): void {
         this.angle += this.increment * Time.deltaTime();
-        this.value = Math.sin(this.angle);
+        this.value = (Math.sin(this.angle) + 1) / 2;
     }
 }

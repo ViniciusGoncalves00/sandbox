@@ -5,7 +5,7 @@ export class ExampleCanvas2DRenderer extends Canvas2DRenderer<Example> {
     public update(): void {
         super.update();
 
-        const v = (this.application.value + 1) * 0.5;
+        const v = this.application.value;
         
         const width = this.canvas.width * v;
         const height = this.canvas.height * v;

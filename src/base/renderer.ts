@@ -15,7 +15,7 @@ export abstract class Canvas2DRenderer<T extends Application> extends Renderer<T
     protected canvas!: HTMLCanvasElement;
     protected ctx!: CanvasRenderingContext2D;
 
-    mount(container: HTMLElement): void {
+    public mount(container: HTMLElement): void {
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d")!;
         container.appendChild(this.canvas);
@@ -26,16 +26,16 @@ export abstract class Canvas2DRenderer<T extends Application> extends Renderer<T
         );
     }
 
-    resize(width: number, height: number): void {
+    public resize(width: number, height: number): void {
         this.canvas.width = width;
         this.canvas.height = height;
     }
 
-    update(): void {
+    public update(): void {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    dispose(): void {
+    public dispose(): void {
         this.canvas.remove();
     }
 }
@@ -48,7 +48,7 @@ export abstract class ThreeJSRenderer<T extends Application> extends Renderer<T>
     protected scene!: THREE.Scene;
     protected camera!: THREE.Camera;
 
-    mount(container: HTMLElement): void {
+    public mount(container: HTMLElement): void {
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         container.appendChild(this.renderer.domElement);
 
@@ -69,7 +69,7 @@ export abstract class ThreeJSRenderer<T extends Application> extends Renderer<T>
         );
     }
 
-    resize(width: number, height: number): void {
+    public resize(width: number, height: number): void {
         this.renderer.setSize(width, height);
 
         if(this.camera instanceof THREE.PerspectiveCamera) {
@@ -78,20 +78,54 @@ export abstract class ThreeJSRenderer<T extends Application> extends Renderer<T>
         }
     }
 
-    update(): void {
+    public update(): void {
         this.renderer.render(this.scene, this.camera);
     }
 
-    dispose(): void {
+    public dispose(): void {
         this.renderer.dispose();
         this.renderer.domElement.remove();
     }
+}
 
-    getScene(): THREE.Scene {
-        return this.scene;
+import { Chart, type ChartConfiguration } from "chart.js/auto";
+
+export abstract class ChartJSRenderer<T extends Application> extends Renderer<T> {
+    protected canvas!: HTMLCanvasElement;
+    protected chart!: Chart;
+
+    protected abstract createConfig(): ChartConfiguration;
+
+    public mount(container: HTMLElement): void {
+        this.canvas = document.createElement("canvas");
+        container.appendChild(this.canvas);
+
+        this.chart = new Chart(
+            this.canvas,
+            this.createConfig()
+        );
+
+        this.resize(
+            container.clientWidth,
+            container.clientHeight
+        );
     }
 
-    getCamera(): THREE.Camera {
-        return this.camera;
+    public resize(width: number, height: number): void {
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.chart.resize();
+    }
+
+    public update(): void {
+        this.updateChart();
+        this.chart.update("none");
+    }
+
+    protected abstract updateChart(): void;
+
+    public dispose(): void {
+        this.chart.destroy();
+        this.canvas.remove();
     }
 }
