@@ -1,7 +1,9 @@
 export type Event =
+| ApplicationEvent
 | MatchEvent
 | GameEvent
-| LoopEvent;
+| OnTabChange
+| TimeEvent;
 
 // export enum FinishEvent {
 //     WIN,
@@ -24,7 +26,15 @@ export enum MatchEvent {
     QUIT,
 }
 
-export enum LoopEvent {
+export enum ApplicationEvent {
+    Start,
+    Restart,
+    Pause,
+    Resume,
+    Quit,
+}
+
+export enum TimeEvent {
     Start,
     Stop,
     Update,
@@ -32,8 +42,16 @@ export enum LoopEvent {
     LateUpdate,
 }
 
-export enum TabBehavior {
+export enum OnTabChange {
     Continue,
     PauseAndResume,
     Pause
+}
+
+export enum ContextState {
+    Created,
+    Builded,
+    Running,
+    Paused,
+    Disposed
 }

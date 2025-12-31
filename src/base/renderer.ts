@@ -7,17 +7,17 @@ export abstract class Renderer<T extends Application> {
         this.application = application;
     }
     
-    abstract mount(container: HTMLElement): void;
-    abstract resize(width: number, height: number): void;
-    abstract update(): void;
-    abstract dispose(): void;
+    public abstract start(container: HTMLElement): void;
+    public abstract resize(width: number, height: number): void;
+    public abstract update(): void;
+    public abstract dispose(): void;
 }
 
 export abstract class Canvas2DRenderer<T extends Application> extends Renderer<T> {
     protected canvas!: HTMLCanvasElement;
     protected ctx!: CanvasRenderingContext2D;
 
-    public mount(container: HTMLElement): void {
+    public start(container: HTMLElement): void {
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d")!;
         container.appendChild(this.canvas);
@@ -49,7 +49,7 @@ export abstract class ThreeJSRenderer<T extends Application> extends Renderer<T>
     protected scene!: THREE.Scene;
     protected camera!: THREE.Camera;
 
-    public mount(container: HTMLElement): void {
+    public start(container: HTMLElement): void {
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         container.appendChild(this.renderer.domElement);
 
@@ -97,7 +97,7 @@ export abstract class ChartJSRenderer<T extends Application> extends Renderer<T>
 
     protected abstract createConfig(): ChartConfiguration;
 
-    public mount(container: HTMLElement): void {
+    public start(container: HTMLElement): void {
         this.canvas = document.createElement("canvas");
         container.appendChild(this.canvas);
 

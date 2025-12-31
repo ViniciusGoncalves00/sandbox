@@ -12,8 +12,8 @@ export class ExampleThreeJSRenderer extends ThreeJSRenderer<Example> {
         this.mesh = new THREE.Mesh(geometry);
     }
 
-    public mount(container: HTMLElement): void {
-        super.mount(container);
+    public start(container: HTMLElement): void {
+        super.start(container);
         
         this.scene.add(this.mesh);
     }

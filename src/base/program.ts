@@ -3,8 +3,7 @@ import { Context } from "./context";
 import type { Application } from "./application";
 
 export class Program<T extends Application> {
-    private contexts: Map<number, Context<T>> = new Map();
-    private counter: number = 0;
+    private contexts: Context<T>[] = [];
 
     public constructor() {
         Time.start();
@@ -12,14 +11,7 @@ export class Program<T extends Application> {
 
     public createContext(): Context<T> {
         const context = new Context<T>();
-
-        Time.update.subscribe(() => context.application?.update());
-        Time.fixedUpdate.subscribe(() => context.application?.fixedUpdate());
-        Time.lateUpdate.subscribe(() => context.application?.lateUpdate());
-        Time.lateUpdate.subscribe(() => context.viewport?.update());
-
-        this.contexts.set(this.counter, context);
-        this.counter++;
+        this.contexts.push(context);
         return context;
     }
     

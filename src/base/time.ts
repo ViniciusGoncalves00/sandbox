@@ -1,10 +1,10 @@
 import { EventSystem } from "./event-system";
-import { LoopEvent, TabBehavior } from "./events";
+import { TimeEvent, OnTabChange } from "./events";
 
 export class Time {
-    public static update: EventSystem<LoopEvent.Update> = new EventSystem();
-    public static fixedUpdate: EventSystem<LoopEvent.FixedUpdate> = new EventSystem();
-    public static lateUpdate: EventSystem<LoopEvent.LateUpdate> = new EventSystem();
+    public static update: EventSystem<TimeEvent.Update> = new EventSystem();
+    public static fixedUpdate: EventSystem<TimeEvent.FixedUpdate> = new EventSystem();
+    public static lateUpdate: EventSystem<TimeEvent.LateUpdate> = new EventSystem();
 
     private static frameID: number = 0;
     private static previousUpdate: number | null = null;
@@ -14,7 +14,7 @@ export class Time {
     
     private static running: boolean = false;
     private static visibilityListenerAttached: boolean = false;
-    private static tabBehavior: TabBehavior = TabBehavior.PauseAndResume;
+    private static onTabChangeBehavior: OnTabChange = OnTabChange.PauseAndResume;
 
     private constructor() {}
 
@@ -40,8 +40,8 @@ export class Time {
         return this;
     }
 
-    public static setTabBehavior(behavior: TabBehavior): Time {
-        this.tabBehavior = behavior;
+    public static setTabBehavior(behavior: OnTabChange): Time {
+        this.onTabChangeBehavior = behavior;
         this.attachVisibilityListener();
         return this;
     }
@@ -63,17 +63,17 @@ export class Time {
     }
 
     private static onVisibilityChange = (): void => {
-        switch (this.tabBehavior) {
-            case TabBehavior.Continue:
+        switch (this.onTabChangeBehavior) {
+            case OnTabChange.Continue:
                 break;
-            case TabBehavior.PauseAndResume:
+            case OnTabChange.PauseAndResume:
                 if (document.hidden) {
                     this.stop();
                 } else {
                     this.start();
                 }
                 break;
-            case TabBehavior.Pause:
+            case OnTabChange.Pause:
                 if (document.hidden) {
                     this.stop();
                 }
@@ -95,13 +95,13 @@ export class Time {
         this.previousUpdate = now;
         this.accumulator += this.delta;
 
-        this.update.notify(LoopEvent.Update);
+        this.update.notify(TimeEvent.Update);
 
         while (this.accumulator >= this.fixedDelta) {
             this.accumulator -= this.fixedDelta;
-            this.fixedUpdate.notify(LoopEvent.FixedUpdate);
+            this.fixedUpdate.notify(TimeEvent.FixedUpdate);
         }
 
-        this.lateUpdate.notify(LoopEvent.LateUpdate);
+        this.lateUpdate.notify(TimeEvent.LateUpdate);
     };
 }
