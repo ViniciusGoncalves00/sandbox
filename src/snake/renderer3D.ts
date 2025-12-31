@@ -25,7 +25,7 @@ export class renderer3D extends ThreeJSRenderer<SnakeGame> {
         for (let i = 0; i < board.size; i++) {
             const { x, y } = board.index2Coordinates(i);
 
-            const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+            const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, wireframe: true });
             const mesh = new THREE.Mesh(geometry, material);
 
             mesh.position.set(x, 0, y);
