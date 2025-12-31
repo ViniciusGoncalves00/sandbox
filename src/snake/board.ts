@@ -118,11 +118,11 @@ export class Board {
     //#endregion
 
     //#region CONVERSIONS
-    private coordinates2Index({ x, y }: Vector2Int): number {
+    public coordinates2Index({ x, y }: Vector2Int): number {
         return y * this.width + x;
     }
 
-    private index2Coordinates(index: number): Vector2Int {
+    public index2Coordinates(index: number): Vector2Int {
         return {
             x: index % this.width,
             y: Math.floor(index / this.width),

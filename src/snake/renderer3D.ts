@@ -1,26 +1,29 @@
 import * as THREE from "three";
-import { Board } from "./board";
+import { ThreeJSRenderer } from "../base/renderer";
+import type { SnakeGame } from "./snakeGame";
 import { TileState } from "./utils";
+import { degToRad } from "three/src/math/MathUtils.js";
 
-export interface BoardRenderer {
-    init(board: Board): void;
-    render(board: Board): void;
-    dispose(): void;
-}
-
-export class ThreeBoardRenderer implements BoardRenderer {
-    private scene: THREE.Scene;
+export class renderer3D extends ThreeJSRenderer<SnakeGame> {
     private tiles: THREE.Mesh[] = [];
-
-    constructor(scene: THREE.Scene) {
-        this.scene = scene;
+    
+    public constructor(application: SnakeGame) {
+        super(application);
     }
 
-    init(board: Board): void {
-        const geometry = new THREE.PlaneGeometry(1, 1);
+    public start(container: HTMLElement): void {
+        super.start(container);
+        
+        const board = this.application.board;
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+        this.camera.position.set(board.width / 2, - (board.width + board.height) / 2 , board.height / 2);
+        const target = this.camera.position.clone().add(new THREE.Vector3(0, 1, 0));
+        this.camera.lookAt(target);
+        this.camera.rotateZ(degToRad(180));
 
         for (let i = 0; i < board.size; i++) {
-            const { x, y } = this.indexToCoord(i, board.width);
+            const { x, y } = board.index2Coordinates(i);
 
             const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
             const mesh = new THREE.Mesh(geometry, material);
@@ -33,9 +36,13 @@ export class ThreeBoardRenderer implements BoardRenderer {
         }
     }
 
-    render(board: Board): void {
+    public update(): void {
+        super.update();
+
+        const board = this.application.board;
         for (let i = 0; i < board.size; i++) {
-            const tile = board["grid"][i];
+            const coordinates = board.index2Coordinates(i);
+            const tile = board.getTile(coordinates);
             const mesh = this.tiles[i];
 
             switch (tile) {
@@ -50,21 +57,5 @@ export class ThreeBoardRenderer implements BoardRenderer {
                     break;
             }
         }
-    }
-
-    dispose(): void {
-        this.tiles.forEach(t => {
-            t.geometry.dispose();
-            (t.material as THREE.Material).dispose();
-            this.scene.remove(t);
-        });
-        this.tiles = [];
-    }
-
-    private indexToCoord(index: number, width: number) {
-        return {
-            x: index % width,
-            y: Math.floor(index / width)
-        };
     }
 }

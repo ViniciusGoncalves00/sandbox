@@ -1,194 +1,257 @@
-import * as THREE from "three"
+// import * as THREE from "three"
+// import { Program } from "../base/program";
+// import { Viewport3D, ViewportChart } from "../base/viewport";
+// import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./utils";
+// import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
+// import { SnakeGame } from "./snakeGame";
+// import { Chart, type ChartConfiguration } from "chart.js/auto";
+// import { GameEvent } from "../base/events";
+// import { ThreeBoardRenderer } from "./renderer";
+
 import { Program } from "../base/program";
-import { Viewport3D, ViewportChart } from "../base/viewport";
-import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./utils";
-import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
+import { Viewport } from "../base/viewport";
+import { ExampleOverlay } from "../example/exampleOverlay";
+import { Human } from "./player";
+import { renderer3D } from "./renderer3D";
 import { SnakeGame } from "./snakeGame";
-import { Chart, type ChartConfiguration } from "chart.js/auto";
-import { GameEvent } from "../base/events";
-import { ThreeBoardRenderer } from "./renderer";
+import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./utils";
 
-const playerType = [
-    HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,
-    HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
-];
-const speeds = [
-    150, 150, 150, 150, 150, 150,
-];
+const program = new Program();
 
-for (let index = 0; index < playerType.length; index++) {
-    const app = new Program();
+const head: Vector2Int = { x: 1, y: 2};
+const tail: Vector2Int = { x: 1, y: 1};
+const initialSnake: Vector2Int[] = [head, tail]
 
-    const viewport3d = app.register(new Viewport3D());
-    viewport3d.enable().append(document.body).setTitle(playerType[index].name);
+const snakeParams: SnakeParameters = { speed: 10, initial: initialSnake};
+const gridParams: BoardParameters = { width: 10, height: 10 };
+const snakeGameParams: SnakeGameParameters = {
+    snake: snakeParams,
+    board: gridParams
+};
+const player = new Human();
 
-    const viewportChartSize = app.register(new ViewportChart());
-    viewportChartSize.enable().append(document.body).setTitle(playerType[index].name);
-    const viewportChartSteps = app.register(new ViewportChart());
-    viewportChartSteps.enable().append(document.body).setTitle(playerType[index].name);
+const context = program.createContext();
 
-    const scene = new THREE.Scene();
+const snake = new SnakeGame(snakeGameParams, player, context.applicationEvents);
+const renderer = new renderer3D(snake);
+const container = document.getElementById("threeJS")!;
+const viewport3D = new Viewport(renderer, container);
 
-    const fov = 75;
-    const near = 0.1;
-    const far = 1000;
+context
+    .setApplication(snake)
+    .setViewport(viewport3D)
+    .setOverlay(new ExampleOverlay())
+    .overlay()?.build(container).show();
 
-    const camera = new THREE.PerspectiveCamera(fov, 0, near, far);
-    camera.name = "MainCamera";
-    camera.position.set(10, 10, 10);
-    camera.lookAt(0, 0, 0);
+// const threeJSRenderer = new ExampleThreeJSRenderer(app);
+// const threeJSviewport = new Viewport(threeJSRenderer, document.getElementById("threeJS")!);
 
-    viewport3d.setActiveCamera(camera).setScene(scene);
+// const playerType = [
+//     HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,
+//     HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
+// ];
+// const speeds = [
+//     150, 150, 150, 150, 150, 150,
+// ];
 
-    const head: Vector2Int = { x: 1, y: 2};
-    const tail: Vector2Int = { x: 1, y: 1};
-    const initialSnake: Vector2Int[] = [head, tail]
+// for (let index = 0; index < playerType.length; index++) {
+//     const app = new Program();
 
-    const snakeParams: SnakeParameters = { speed: speeds[index], initial: initialSnake};
-    const gridParams: BoardParameters = { width: 10, height: 10 };
-    const snakeGameParams: SnakeGameParameters = {
-        snake: snakeParams,
-        board: gridParams
-    };
-    const player = new playerType[index];
+//     const viewport3d = app.register(new Viewport3D());
+//     viewport3d.enable().append(document.body).setTitle(playerType[index].name);
 
-    const renderer = new ThreeBoardRenderer(scene);
-    const snake = new SnakeGame(snakeGameParams, player, viewport3d.gameEvents, renderer);
-    renderer.init(snake.board);
-    viewport3d.setApp(snake);
+//     const viewportChartSize = app.register(new ViewportChart());
+//     viewportChartSize.enable().append(document.body).setTitle(playerType[index].name);
+//     const viewportChartSteps = app.register(new ViewportChart());
+//     viewportChartSteps.enable().append(document.body).setTitle(playerType[index].name);
 
-    const configSteps: ChartConfiguration<'bar'> = {
-        type: 'bar',
-        data: {
-            datasets: [
-                {
-                    label: 'Steps to get a food',
-                    data: [],
-                }
-            ]
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Food index'
-                    },
-                    max: snake.board.width * snake.board.height,
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Steps'
-                    },
-                    max: snake.board.width * snake.board.height,
-                }
-            },
-            responsive: false,
-            maintainAspectRatio: false,
-            devicePixelRatio: window.devicePixelRatio
-        }
-    };
+//     const scene = new THREE.Scene();
 
-    const configSize: ChartConfiguration<'line'> = {
-        type: 'line',
-        data: {
-            datasets: [
-                {
-                    label: 'Size per step',
-                    pointStyle: 'false',
-                    pointRadius: 0,
-                    data: [],
-                }
-            ]
-        },
-        options: {
-            scales: {
-                x: {
-                    type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Steps'
-                    },
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Snake Size'
-                    },
-                }
-            },
-            responsive: false,
-            maintainAspectRatio: false,
-            devicePixelRatio: window.devicePixelRatio
-        }
-    };
+//     const fov = 75;
+//     const near = 0.1;
+//     const far = 1000;
 
-    viewport3d.gameEvents.subscribe((event) => {
-        const datasetSize = chartStep.data.datasets[0].data as { x: number; y: number }[];
-        const datasetSteps = chartSize.data.datasets[0].data as { x: number; y: number }[];
+//     const camera = new THREE.PerspectiveCamera(fov, 0, near, far);
+//     camera.name = "MainCamera";
+//     camera.position.set(10, 10, 10);
+//     camera.lookAt(0, 0, 0);
 
-        switch (event) {
-            case GameEvent.ATE:
-                datasetSize.push({
-                    x: snake.steps,
-                    y: snake.board.snakeSize(),
-                });
-                datasetSteps.push({
-                    x: datasetSteps.length,
-                    y: snake.stepsPerFood.at(-1)!
-                });
-                break;
-            case GameEvent.WIN:
-                console.log("WIN")
-                viewport3d.disable();
-            case GameEvent.LOSE:
-                console.log("LOSE")
-                viewport3d.disable();
-            default:
-                break;
-        }
-    })
+//     viewport3d.setActiveCamera(camera).setScene(scene);
 
-    const chartSize = new Chart(viewportChartSize.canvas, configSteps);
-    viewportChartSize.setChart(chartSize);
+//     const head: Vector2Int = { x: 1, y: 2};
+//     const tail: Vector2Int = { x: 1, y: 1};
+//     const initialSnake: Vector2Int[] = [head, tail]
 
-    const chartStep = new Chart(viewportChartSteps.canvas, configSize);
-    viewportChartSteps.setChart(chartStep);
-}
+//     const snakeParams: SnakeParameters = { speed: speeds[index], initial: initialSnake};
+//     const gridParams: BoardParameters = { width: 10, height: 10 };
+//     const snakeGameParams: SnakeGameParameters = {
+//         snake: snakeParams,
+//         board: gridParams
+//     };
+//     const player = new playerType[index];
 
-updateGrid3ColumnsLayout(playerType.length * 3);
+//     const renderer = new ThreeBoardRenderer(scene);
+//     const snake = new SnakeGame(snakeGameParams, player, viewport3d.gameEvents, renderer);
+//     renderer.init(snake.board);
+//     viewport3d.setApp(snake);
 
-// function updateGridAdaptativeColumnsLayout(count: number) {
-//     if (count <= 0) return { cols: 1, rows: 1 };
+//     const configSteps: ChartConfiguration<'bar'> = {
+//         type: 'bar',
+//         data: {
+//             datasets: [
+//                 {
+//                     label: 'Steps to get a food',
+//                     data: [],
+//                 }
+//             ]
+//         },
+//         options: {
+//             scales: {
+//                 x: {
+//                     type: 'linear',
+//                     title: {
+//                         display: true,
+//                         text: 'Food index'
+//                     },
+//                     max: snake.board.width * snake.board.height,
+//                 },
+//                 y: {
+//                     title: {
+//                         display: true,
+//                         text: 'Steps'
+//                     },
+//                     max: snake.board.width * snake.board.height,
+//                 }
+//             },
+//             responsive: false,
+//             maintainAspectRatio: false,
+//             devicePixelRatio: window.devicePixelRatio
+//         }
+//     };
 
-//     const cols = Math.ceil(Math.sqrt(count));
-//     const rows = Math.ceil(count / cols);
+//     const configSize: ChartConfiguration<'line'> = {
+//         type: 'line',
+//         data: {
+//             datasets: [
+//                 {
+//                     label: 'Size per step',
+//                     pointStyle: 'false',
+//                     pointRadius: 0,
+//                     data: [],
+//                 }
+//             ]
+//         },
+//         options: {
+//             scales: {
+//                 x: {
+//                     type: 'linear',
+//                     title: {
+//                         display: true,
+//                         text: 'Steps'
+//                     },
+//                 },
+//                 y: {
+//                     title: {
+//                         display: true,
+//                         text: 'Snake Size'
+//                     },
+//                 }
+//             },
+//             responsive: false,
+//             maintainAspectRatio: false,
+//             devicePixelRatio: window.devicePixelRatio
+//         }
+//     };
 
-//     document.body.classList.remove(
-//         "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4",
-//         "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4"
-//     );
+//     viewport3d.gameEvents.subscribe((event) => {
+//         const datasetSize = chartStep.data.datasets[0].data as { x: number; y: number }[];
+//         const datasetSteps = chartSize.data.datasets[0].data as { x: number; y: number }[];
 
-//     document.body.classList.add(
-//         `grid-cols-${cols}`,
-//         `grid-rows-${rows}`
-//     );
+//         switch (event) {
+//             case GameEvent.ATE:
+//                 datasetSize.push({
+//                     x: snake.steps,
+//                     y: snake.board.snakeSize(),
+//                 });
+//                 datasetSteps.push({
+//                     x: datasetSteps.length,
+//                     y: snake.stepsPerFood.at(-1)!
+//                 });
+//                 break;
+//             case GameEvent.WIN:
+//                 console.log("WIN")
+//                 viewport3d.disable();
+//             case GameEvent.LOSE:
+//                 console.log("LOSE")
+//                 viewport3d.disable();
+//             default:
+//                 break;
+//         }
+//     })
+
+//     const chartSize = new Chart(viewportChartSize.canvas, configSteps);
+//     viewportChartSize.setChart(chartSize);
+
+//     const chartStep = new Chart(viewportChartSteps.canvas, configSize);
+//     viewportChartSteps.setChart(chartStep);
 // }
 
-// function updateGrid2ColumnsLayout(count: number) {
-//     if (count <= 0) return { cols: 2, rows: 1 };
+// updateGrid3ColumnsLayout(playerType.length * 3);
+
+// // function updateGridAdaptativeColumnsLayout(count: number) {
+// //     if (count <= 0) return { cols: 1, rows: 1 };
+
+// //     const cols = Math.ceil(Math.sqrt(count));
+// //     const rows = Math.ceil(count / cols);
+
+// //     document.body.classList.remove(
+// //         "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4",
+// //         "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4"
+// //     );
+
+// //     document.body.classList.add(
+// //         `grid-cols-${cols}`,
+// //         `grid-rows-${rows}`
+// //     );
+// // }
+
+// // function updateGrid2ColumnsLayout(count: number) {
+// //     if (count <= 0) return { cols: 2, rows: 1 };
+
+// //     let cols = Math.ceil(Math.sqrt(count));
+
+// //     if (cols % 2 !== 0) cols++;
+
+// //     const rows = Math.ceil(count / cols);
+
+// //     document.body.classList.remove(
+// //         "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4", "grid-cols-6",
+// //         "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4", "grid-rows-6"
+// //     );
+
+// //     document.body.classList.add(
+// //         `grid-cols-${cols}`,
+// //         `grid-rows-${rows}`
+// //     );
+
+// //     return { cols, rows };
+// // }
+
+// function updateGrid3ColumnsLayout(count: number) {
+//     if (count <= 0) return { cols: 3, rows: 1 };
 
 //     let cols = Math.ceil(Math.sqrt(count));
 
-//     if (cols % 2 !== 0) cols++;
+//     // força múltiplo de 3
+//     cols = Math.ceil(cols / 3) * 3;
 
 //     const rows = Math.ceil(count / cols);
 
 //     document.body.classList.remove(
-//         "grid-cols-1", "grid-cols-2", "grid-cols-3", "grid-cols-4", "grid-cols-6",
-//         "grid-rows-1", "grid-rows-2", "grid-rows-3", "grid-rows-4", "grid-rows-6"
+//         "grid-cols-1", "grid-cols-2", "grid-cols-3",
+//         "grid-cols-4", "grid-cols-6", "grid-cols-9",
+//         "grid-rows-1", "grid-rows-2", "grid-rows-3",
+//         "grid-rows-4", "grid-rows-6", "grid-rows-9"
 //     );
 
 //     document.body.classList.add(
@@ -198,28 +261,3 @@ updateGrid3ColumnsLayout(playerType.length * 3);
 
 //     return { cols, rows };
 // }
-
-function updateGrid3ColumnsLayout(count: number) {
-    if (count <= 0) return { cols: 3, rows: 1 };
-
-    let cols = Math.ceil(Math.sqrt(count));
-
-    // força múltiplo de 3
-    cols = Math.ceil(cols / 3) * 3;
-
-    const rows = Math.ceil(count / cols);
-
-    document.body.classList.remove(
-        "grid-cols-1", "grid-cols-2", "grid-cols-3",
-        "grid-cols-4", "grid-cols-6", "grid-cols-9",
-        "grid-rows-1", "grid-rows-2", "grid-rows-3",
-        "grid-rows-4", "grid-rows-6", "grid-rows-9"
-    );
-
-    document.body.classList.add(
-        `grid-cols-${cols}`,
-        `grid-rows-${rows}`
-    );
-
-    return { cols, rows };
-}

@@ -5,7 +5,6 @@ import { Example } from "./example";
 import { ExampleThreeJSRenderer } from "./exampleThreeJSRenderer";
 import { ExampleCanvas2DRenderer } from "./example2DRenderer";
 import { ExampleChartJSRenderer } from "./exampleChartJSRenderer";
-import { ApplicationEvent } from "../base/events";
 
 const program = new Program();
 
