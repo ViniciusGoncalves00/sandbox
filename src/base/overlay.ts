@@ -7,13 +7,11 @@ export abstract class Overlay {
 
     protected container!: HTMLElement;
 
-    public build(parent: HTMLElement): Overlay {
+    public constructor(parent: HTMLElement) {
         this.container = document.createElement("div");
-        this.container.classList = "w-full h-full";
+        this.container.classList = "fixed inset-0 flex items-center justify-center";
         parent.appendChild(this.container);
         this.hide();
-        
-        return this;
     }
 
     public show(): void {

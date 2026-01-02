@@ -49,6 +49,7 @@ export enum OnTabChange {
 }
 
 export enum ContextState {
+    Initialized,
     Created,
     Builded,
     Running,

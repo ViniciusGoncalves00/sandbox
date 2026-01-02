@@ -6,33 +6,16 @@ import { ExampleThreeJSRenderer } from "./exampleThreeJSRenderer";
 import { ExampleCanvas2DRenderer } from "./example2DRenderer";
 import { ExampleChartJSRenderer } from "./exampleChartJSRenderer";
 
-const program = new Program();
-
 const app = new Example();
+const container = document.getElementById("container")!
 
-const threeJSRenderer = new ExampleThreeJSRenderer(app);
-const threeJSviewport = new Viewport(threeJSRenderer, document.getElementById("threeJS")!);
+const program = new Program();
+const context = program.createContext();
 
-const canvas2DRenderer = new ExampleCanvas2DRenderer(app);
-const canvas2Dviewport = new Viewport(canvas2DRenderer, document.getElementById("canvas2D")!);
-
-const exampleChartJSRenderer = new ExampleChartJSRenderer(app);
-const exampleChartJSviewport = new Viewport(exampleChartJSRenderer, document.getElementById("chartJS")!);
-
-program.createContext()
+context
     .setApplication(app)
-    .setViewport(threeJSviewport)
-    .setOverlay(new ExampleOverlay())
-    .overlay()?.build(document.getElementById("threeJS")!).show();
-
-program.createContext()
-    .setApplication(app)
-    .setViewport(canvas2Dviewport)
-    .setOverlay(new ExampleOverlay())
-    .overlay()?.build(document.getElementById("canvas2D")!).show();
-
-program.createContext()
-    .setApplication(app)
-    .setViewport(exampleChartJSviewport)
-    .setOverlay(new ExampleOverlay())
-    .overlay()?.build(document.getElementById("chartJS")!).show();
+    .setOverlay(new ExampleOverlay(container))
+    .addViewport("threeJS", new Viewport(new ExampleThreeJSRenderer(app), container, "Three JS"))
+    .addViewport("canvas2D", new Viewport(new ExampleCanvas2DRenderer(app), container, "Canvas 2D"))
+    .addViewport("chartJS", new Viewport(new ExampleChartJSRenderer(app), container, "chart JS"))
+    .init();
