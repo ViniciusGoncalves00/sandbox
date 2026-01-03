@@ -1,10 +1,10 @@
 import { type SnakeGameParameters, type Vector2Int } from "./utils";
 import type { Player } from "./player";
 import { Board } from "./board";
-import { ApplicationEvent } from "../base/events";
-import type { EventSystem } from "../base/event-system";
-import { Application } from "../base/application";
-import { Time } from "../base/time";
+import { ApplicationEvent } from "../../base/events";
+import type { EventSystem } from "../../base/event-system";
+import { Application } from "../../base/application";
+import { Time } from "../../base/time";
 
 export class SnakeGame extends Application {
     public readonly board: Board;

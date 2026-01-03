@@ -1,15 +1,17 @@
 import type { ChartConfiguration } from "chart.js";
-import { ChartJSRenderer } from "../base/renderer";
-import type { SnakeGame } from "./snakeGame";
+import { ChartJSRenderer } from "../../base/renderer";
+import type { SnakeGame } from "../logic/snakeGame";
 
-export class ChartStepsPerFood extends ChartJSRenderer<SnakeGame> {
+export class ChartSizePerStep extends ChartJSRenderer<SnakeGame> {
     protected createConfig(): ChartConfiguration {
         return {
-            type: 'bar',
+            type: 'line',
             data: {
                 datasets: [
                     {
-                        label: 'Steps to get a food',
+                        label: 'Size per step',
+                        pointStyle: 'false',
+                        pointRadius: 0,
                         data: [],
                     }
                 ]
@@ -20,16 +22,15 @@ export class ChartStepsPerFood extends ChartJSRenderer<SnakeGame> {
                         type: 'linear',
                         title: {
                             display: true,
-                            text: 'Food index'
+                            text: 'Steps'
                         },
-                        max: this.application.board.width * this.application.board.height,
                     },
                     y: {
                         title: {
                             display: true,
-                            text: 'Steps'
+                            text: 'Snake Size',
                         },
-                        max: this.application.board.width * this.application.board.height,
+                        max: this.application.board.size
                     }
                 },
                 responsive: false,
@@ -44,11 +45,6 @@ export class ChartStepsPerFood extends ChartJSRenderer<SnakeGame> {
         const labels = this.chart.data.labels!;
 
         labels.push("");
-        dataset.data.push({ x: dataset.data.length, y: this.application.stepsPerFood.at(-1)!});
-
-        if (dataset.data.length > 200) {
-            dataset.data.shift();
-            labels.shift();
-        }
+        dataset.data.push({ x: this.application.steps, y: this.application.board.getSnake().length});
     }
 }

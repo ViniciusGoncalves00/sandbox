@@ -1,17 +1,15 @@
 import type { ChartConfiguration } from "chart.js";
-import { ChartJSRenderer } from "../base/renderer";
-import type { SnakeGame } from "./snakeGame";
+import { ChartJSRenderer } from "../../base/renderer";
+import type { SnakeGame } from "../logic/snakeGame";
 
-export class ChartSizePerStep extends ChartJSRenderer<SnakeGame> {
+export class ChartStepsPerFood extends ChartJSRenderer<SnakeGame> {
     protected createConfig(): ChartConfiguration {
         return {
-            type: 'line',
+            type: 'bar',
             data: {
                 datasets: [
                     {
-                        label: 'Size per step',
-                        pointStyle: 'false',
-                        pointRadius: 0,
+                        label: 'Steps to get a food',
                         data: [],
                     }
                 ]
@@ -22,14 +20,16 @@ export class ChartSizePerStep extends ChartJSRenderer<SnakeGame> {
                         type: 'linear',
                         title: {
                             display: true,
-                            text: 'Steps'
+                            text: 'Food index'
                         },
+                        max: this.application.board.width * this.application.board.height,
                     },
                     y: {
                         title: {
                             display: true,
-                            text: 'Snake Size'
+                            text: 'Steps'
                         },
+                        max: this.application.board.width * this.application.board.height,
                     }
                 },
                 responsive: false,
@@ -44,11 +44,6 @@ export class ChartSizePerStep extends ChartJSRenderer<SnakeGame> {
         const labels = this.chart.data.labels!;
 
         labels.push("");
-        dataset.data.push({ x: this.application.steps, y: this.application.board.getSnake().length});
-
-        if (dataset.data.length > 200) {
-            dataset.data.shift();
-            labels.shift();
-        }
+        dataset.data.push({ x: dataset.data.length, y: this.application.stepsPerFood.at(-1)!});
     }
 }

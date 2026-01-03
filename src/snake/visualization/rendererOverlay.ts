@@ -1,4 +1,4 @@
-import { Overlay } from "../base/overlay";
+import { Overlay } from "../../base/overlay";
 
 export class RendererOverlay extends Overlay {
     public constructor(parent: HTMLElement) {

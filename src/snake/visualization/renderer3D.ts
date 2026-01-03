@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import { ThreeJSRenderer } from "../base/renderer";
-import type { SnakeGame } from "./snakeGame";
-import { TileState } from "./utils";
+import { ThreeJSRenderer } from "../../base/renderer";
+import type { SnakeGame } from "../logic/snakeGame";
+import { TileState } from "../logic/utils";
 import { degToRad } from "three/src/math/MathUtils.js";
 
 export class renderer3D extends ThreeJSRenderer<SnakeGame> {
@@ -48,12 +48,15 @@ export class renderer3D extends ThreeJSRenderer<SnakeGame> {
             switch (tile) {
                 case TileState.Empty:
                     (mesh.material as THREE.MeshBasicMaterial).color.set(0xaaaaaa);
+                    (mesh.material as THREE.MeshBasicMaterial).wireframe = true;
                     break;
                 case TileState.Snake:
                     (mesh.material as THREE.MeshBasicMaterial).color.set(0x33aaff);
+                    (mesh.material as THREE.MeshBasicMaterial).wireframe = false;
                     break;
                 case TileState.Food:
                     (mesh.material as THREE.MeshBasicMaterial).color.set(0xff3333);
+                    (mesh.material as THREE.MeshBasicMaterial).wireframe = false;
                     break;
             }
         }

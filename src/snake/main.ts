@@ -1,12 +1,12 @@
-import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./player";
+import { ShortcutHamiltoninanCycle, Human, HamiltonianCycle, GetAndBackHamiltonianCycle, HybridShortcutHamiltonianCycle, ShortestPath, ShortestValidDirectionImprovedPath, ShortestValidDirectionPath, HybridGetAndBackShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle } from "./logic/player";
 
 import { Program } from "../base/program";
 import { Viewport } from "../base/viewport";
-import { renderer3D } from "./renderer3D";
-import { SnakeGame } from "./snakeGame";
-import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./utils";
-import { ChartStepsPerFood } from "./chartStepsPerFood";
-import { ChartSizePerStep } from "./chartSizePerStep";
+import { renderer3D } from "./visualization/renderer3D";
+import { SnakeGame } from "./logic/snakeGame";
+import type { BoardParameters, SnakeGameParameters, SnakeParameters, Vector2Int } from "./logic/utils";
+import { ChartStepsPerFood } from "./visualization/chartStepsPerFood";
+import { ChartSizePerStep } from "./visualization/chartSizePerStep";
 
 const program = new Program();
 
@@ -15,11 +15,11 @@ const tail: Vector2Int = { x: 1, y: 1};
 const initialSnake: Vector2Int[] = [head, tail]
 
 const playerType = [
-    Human, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,
+    HamiltonianCycle, ShortcutHamiltoninanCycle, GetAndBackHamiltonianCycle,
     HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
 ];
 const speeds = [
-    15, 150, 150, 150, 150, 150,
+    150, 150, 150, 150, 150, 150,
 ];
 
 for (let index = 0; index < playerType.length; index++) {
