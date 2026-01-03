@@ -18,7 +18,6 @@ export class Context<T extends Application> {
     // private state: ContextState = ContextState.Created;
 
     public tabBehavior: EventSystem<OnTabChange> = new EventSystem();
-    public timeEvents: EventSystem<TimeEvent> = new EventSystem();
     public applicationEvents: EventSystem<ApplicationEvent> = new EventSystem();
 
     private applicationUnsubscribers: (() => void)[] = [];
@@ -108,19 +107,19 @@ export class Context<T extends Application> {
         this.applicationEvents.subscribe(event => {
             switch (event) {
                 case ApplicationEvent.Start:
-                    this.subscribeViewport(id, viewport);
+                    // this.subscribeViewport(id, viewport);
                     viewport.start();
                     break;
 
                 case ApplicationEvent.Restart:
-                    this.unsubscribeViewport(id);
+                    // this.unsubscribeViewport(id);
                     viewport.dispose();
-                    this.subscribeViewport(id, viewport);
+                    // this.subscribeViewport(id, viewport);
                     viewport.start();
                     break;
 
                 case ApplicationEvent.Quit:
-                    this.unsubscribeViewport(id);
+                    // this.unsubscribeViewport(id);
                     viewport.dispose();
                     break;
             }
@@ -133,7 +132,7 @@ export class Context<T extends Application> {
         const viewport = this._viewports.get(id);
         if (!viewport) return;
 
-        this.unsubscribeViewport(id);
+        // this.unsubscribeViewport(id);
         viewport.dispose();
         this._viewports.delete(id);
     }
@@ -162,22 +161,22 @@ export class Context<T extends Application> {
     public start(): void {
         this._application?.start();
         this.subscribeApplication();
-        this.subscribeAllViewports();
+        // this.subscribeAllViewports();
     }
 
     public pause(): void {
         this.unsubscribeApplication();
-        this.unsubscribeAllViewports();
+        // this.unsubscribeAllViewports();
     }
 
     public resume(): void {
         this.subscribeApplication();
-        this.subscribeAllViewports();
+        // this.subscribeAllViewports();
     }
 
     public dispose(): void {
         this.unsubscribeApplication();
-        this.unsubscribeAllViewports();
+        // this.unsubscribeAllViewports();
 
         this._viewports.forEach(v => v.dispose());
         this._viewports.clear();
@@ -202,33 +201,33 @@ export class Context<T extends Application> {
         this.applicationUnsubscribers.length = 0;
     }
 
-    private subscribeViewport(id: string, viewport: Viewport<T>): void {
-        const unsubscribers = [
-            Time.lateUpdate.subscribe(() => viewport.update())
-        ];
+    // private subscribeViewport(id: string, viewport: Viewport<T>): void {
+    //     const unsubscribers = [
+    //         Time.lateUpdate.subscribe(() => viewport.update())
+    //     ];
 
-        this.viewportUnsubscribers.set(id, unsubscribers);
-    }
+    //     this.viewportUnsubscribers.set(id, unsubscribers);
+    // }
 
-    private unsubscribeViewport(id: string): void {
-        const subs = this.viewportUnsubscribers.get(id);
-        subs?.forEach(unsub => unsub());
-        this.viewportUnsubscribers.delete(id);
-    }
+    // private unsubscribeViewport(id: string): void {
+    //     const subs = this.viewportUnsubscribers.get(id);
+    //     subs?.forEach(unsub => unsub());
+    //     this.viewportUnsubscribers.delete(id);
+    // }
 
-    private subscribeAllViewports(): void {
-        this._viewports.forEach((viewport, id) => {
-            if (!this.viewportUnsubscribers.has(id)) {
-                this.subscribeViewport(id, viewport);
-            }
-        });
-    }
+    // private subscribeAllViewports(): void {
+    //     this._viewports.forEach((viewport, id) => {
+    //         if (!this.viewportUnsubscribers.has(id)) {
+    //             this.subscribeViewport(id, viewport);
+    //         }
+    //     });
+    // }
 
-    private unsubscribeAllViewports(): void {
-        this.viewportUnsubscribers.forEach(subs =>
-            subs.forEach(unsub => unsub())
-        );
-        this.viewportUnsubscribers.clear();
-    }
+    // private unsubscribeAllViewports(): void {
+    //     this.viewportUnsubscribers.forEach(subs =>
+    //         subs.forEach(unsub => unsub())
+    //     );
+    //     this.viewportUnsubscribers.clear();
+    // }
     // #endregion
 }
