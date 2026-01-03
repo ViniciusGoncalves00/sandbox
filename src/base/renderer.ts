@@ -19,9 +19,6 @@ export abstract class Canvas2DRenderer<T extends Application> extends Renderer<T
 
     public start(container: HTMLElement): void {
         this.canvas = document.createElement("canvas");
-        this.canvas.style.width = "100%";
-        this.canvas.style.height = "100%";
-        this.canvas.style.display = "block";
 
         this.ctx = this.canvas.getContext("2d")!;
         container.appendChild(this.canvas);
@@ -57,7 +54,7 @@ export abstract class ThreeJSRenderer<T extends Application> extends Renderer<T>
         this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
         this.renderer.domElement.style.width = "100%";
         this.renderer.domElement.style.height = "100%";
-        this.renderer.domElement.style.display = "block";
+        this.renderer.domElement.style.display = "flex";
 
         container.appendChild(this.renderer.domElement);
 
@@ -107,9 +104,6 @@ export abstract class ChartJSRenderer<T extends Application> extends Renderer<T>
 
     public start(container: HTMLElement): void {
         this.canvas = document.createElement("canvas");
-        this.canvas.style.width = "100%";
-        this.canvas.style.height = "100%";
-        this.canvas.style.display = "block";
 
         container.appendChild(this.canvas);
 
