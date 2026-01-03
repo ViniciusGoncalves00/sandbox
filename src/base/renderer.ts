@@ -16,32 +16,40 @@ export abstract class Renderer<T extends Application> {
 export abstract class Canvas2DRenderer<T extends Application> extends Renderer<T> {
     protected canvas!: HTMLCanvasElement;
     protected ctx!: CanvasRenderingContext2D;
+    protected dpr = window.devicePixelRatio || 1;
 
     public start(container: HTMLElement): void {
         this.canvas = document.createElement("canvas");
-
         this.ctx = this.canvas.getContext("2d")!;
         container.appendChild(this.canvas);
 
-        this.resize(
-            container.clientWidth,
-            container.clientHeight
-        );
+        this.resize(container.clientWidth, container.clientHeight);
     }
 
     public resize(width: number, height: number): void {
-        this.canvas.style.width = `${width}px`
-        this.canvas.style.height = `${height}px`
+        this.canvas.width  = Math.floor(width * this.dpr);
+        this.canvas.height = Math.floor(height * this.dpr);
+
+        this.canvas.style.width  = `${width}px`;
+        this.canvas.style.height = `${height}px`;
+
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     }
 
     public update(): void {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.clearRect(
+            0,
+            0,
+            this.canvas.width / this.dpr,
+            this.canvas.height / this.dpr
+        );
     }
 
     public dispose(): void {
         this.canvas.remove();
     }
 }
+
 
 import * as THREE from "three";
 
