@@ -2,11 +2,11 @@ import { ArrowHelper, AxesHelper, Camera, Color, ConeGeometry, CylinderGeometry,
 import type { IHandable } from "../common/interfaces/IHandable";
 import { QuadMesh } from "three/webgpu";
 import { MeshPostProcessingMaterial, TransformControls } from "three/examples/jsm/Addons.js";
-import type { Selector } from "../common/selector";
 import type { ISelectable } from "../common/interfaces/ISelectable";
 import { DEFAULT_HANDLER_PARAMETERS, type HandlerParameters } from "./handler-parameters";
 import { Axis, Space, Transformation } from "./enums";
 import { HandlerComponent } from "./handler-component";
+import type { Selector } from "@viniciusgoncalves/three-toolkit";
 
 
 export class Handler {
@@ -315,8 +315,10 @@ export class Handler {
         
         const mesh = this.selectedObject as unknown as Mesh;
         const camera = this.scene.getObjectByName("MainCamera") as Camera;
-        const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
-        const height = this.selector.currentContext()?.element.clientHeight ?? 1;
+        // const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
+        const width = 1;
+        // const height = this.selector.currentContext()?.element.clientHeight ?? 1;
+        const height = 1;
         const center = this.worldToScreenPoint(mesh.position, camera, width, height);
         this.lastAngle = Math.atan2(event.clientY - center.y, event.clientX - center.x);
 
@@ -341,8 +343,10 @@ export class Handler {
         if (!camera) return;
 
         const mousePos = new Vector2(event.clientX, event.clientY);
-        const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
-        const height = this.selector.currentContext()?.element.clientHeight ?? 1;
+        // const width  = this.selector.currentContext()?.element.clientWidth ?? 1;
+        const width = 1;
+        // const height = this.selector.currentContext()?.element.clientHeight ?? 1;
+        const height = 1;
 
         const axis = this.getAxisVector(handler.axis);
 

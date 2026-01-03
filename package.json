@@ -12,7 +12,9 @@
   "description": "",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.16",
+    "@viniciusgoncalves/three-toolkit": "^0.1.5",
     "@viniciusgoncalves/ts-utils": "^1.0.0",
+    "chart.js": "^4.5.1",
     "tailwindcss": "^4.1.16",
     "three": "^0.180.0",
     "webpack": "^5.102.1"

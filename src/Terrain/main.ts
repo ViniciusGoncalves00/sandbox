@@ -4,9 +4,10 @@ import { MathUtils } from "@viniciusgoncalves/ts-utils";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { SelectionContext } from "../common/selection-context";
-import { Selector } from "../common/selector";
 import { Handler } from "../handler/handler";
 import { Terrain } from "./terrain";
+import { Selector } from "@viniciusgoncalves/three-toolkit";
+import type { ISelectable } from "../common/interfaces/ISelectable";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const scene = new THREE.Scene();
@@ -41,7 +42,7 @@ function onResizeWindow() {
 }
 
 const selectionContext = new SelectionContext(canvas, camera);
-const selector = new Selector(selectionContext);
+const selector = new Selector(canvas, camera);
 const handler = new Handler(scene, selector);
 const terrain = new Terrain(scene, selector);
 terrain.updateControlGrid();
@@ -61,7 +62,6 @@ gui.title("Configuration");
 
 const parameters = gui.addFolder("Parameters");
 const debug = gui.addFolder("Debug");
-
 
 const grid = parameters.addFolder("Grid");
 const size = grid.addFolder("Size");
@@ -109,12 +109,15 @@ debug.add(terrain, "showControlNodes").name("Show Control Nodes").onChange((valu
 gui.add( terrain, "randomizeDirections").name( "randomizeDirections");
 
 handler.afterTransformate.push(() => {
-    if(!selector.current) return;
+    // if(!selector.current) return;
 
-    const uuid = (selector.current as unknown as THREE.Mesh).uuid;
-    terrain.updateNodeDirection(uuid);
+    // selector.selection.forEach(element => {
+    //     terrain.updateNodeDirection(element.uuid);
+    // });
     terrain.updateMesh();
 });
 
-selector.onSelectCallbacks.push(() => handler.handle(selector.current));
-selector.onDeselectCallbacks.push(() => handler.handle(selector.current));
+selector.onAddToSelection.push((object) => handler.handle(object as unknown as ISelectable))
+selector.onRemoveFromSelection.push((object) => handler.handle(object as unknown as ISelectable))
+// selector.onSelectCallbacks.push(() => handler.handle(selector.current));
+// selector.onDeselectCallbacks.push(() => handler.handle(selector.current));

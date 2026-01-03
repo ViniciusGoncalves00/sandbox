@@ -46,7 +46,7 @@ camera.position.z = 1;
 camera.lookAt(0, 0, 0);
 scene.add(camera)
 
-const renderer = new WebGPURenderer({ canvas });
+export const renderer = new WebGPURenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const controls = new OrbitControls( camera, renderer.domElement );

@@ -1,8 +1,9 @@
 import * as THREE from "three";
-import { Selector } from "../common/selector";
 import { SelectionContext } from "../common/selection-context";
 import { Handler } from "./handler";
 import { camera, canvas, scene } from "../common/default";
+import { Selector } from "@viniciusgoncalves/three-toolkit";
+import type { ISelectable } from "../common/interfaces/ISelectable";
 
 const geometry = new THREE.BoxGeometry();
 const material = new THREE.MeshPhongMaterial();
@@ -18,8 +19,8 @@ camera.position.set(7, 7, 7);
 scene.add(mesh0, mesh1, mesh2, mesh3);
 
 const selectionContext = new SelectionContext(canvas, camera, [mesh0, mesh1, mesh2, mesh3]);
-const selector = new Selector(selectionContext);
+const selector = new Selector(canvas, camera, [mesh0, mesh1, mesh2, mesh3]);
 const handler = new Handler(scene, selector);
 
-selector.onSelectCallbacks.push(() => handler.handle(selector.current));
-selector.onDeselectCallbacks.push(() => handler.handle(selector.current));
+selector.onAddToSelection.push((object) => handler.handle(object as unknown as ISelectable))
+selector.onRemoveFromSelection.push((object) => handler.handle(object as unknown as ISelectable))
