@@ -22,7 +22,7 @@ const playerType = [
     HybridGetAndBackShortcutHamiltonianCycle, HybridShortcutHamiltonianCycle, HybridGetAndBackHamiltonianCycle,
 ];
 const speeds = [
-    15, 15, 15, 15, 15, 15,
+    75, 75, 75, 75, 75, 75,
 ];
 
 for (let index = 0; index < playerType.length; index++) {
@@ -55,7 +55,7 @@ for (let index = 0; index < playerType.length; index++) {
 
     Time.lateUpdate.subscribe(event => {
         if (snakeGame.isVictory()) context.applicationEvents.notify(ApplicationEvent.Pause); 
-        if (snakeGame.isDefeat()) context.applicationEvents.notify(ApplicationEvent.Pause); 
+        // if (snakeGame.isDefeat()) context.applicationEvents.notify(ApplicationEvent.Pause); 
     })
 
     snakeGame.events.subscribe(event => {
