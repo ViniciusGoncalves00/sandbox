@@ -4,7 +4,7 @@ import type { SnakeGame } from "../logic/snakeGame";
 import { TileState } from "../logic/utils";
 import { degToRad } from "three/src/math/MathUtils.js";
 
-export class renderer3D extends ThreeJSRenderer<SnakeGame> {
+export class Renderer3D extends ThreeJSRenderer<SnakeGame> {
     private tiles: THREE.Mesh[] = [];
     
     public constructor(application: SnakeGame) {

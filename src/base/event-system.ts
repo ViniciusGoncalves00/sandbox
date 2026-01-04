@@ -1,6 +1,4 @@
-import type { Event } from "./events";
-
-export class EventSystem<T extends Event> {
+export class EventSystem<T> {
     private listeners: Set<(event: T) => void> = new Set();
 
     public notify(event: T): void {

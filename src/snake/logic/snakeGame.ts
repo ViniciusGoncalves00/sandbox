@@ -2,9 +2,10 @@ import { type SnakeGameParameters, type Vector2Int } from "./utils";
 import type { Player } from "./player";
 import { Board } from "./board";
 import { ApplicationEvent } from "../../base/events";
-import type { EventSystem } from "../../base/event-system";
+import { EventSystem } from "../../base/event-system";
 import { Application } from "../../base/application";
 import { Time } from "../../base/time";
+import { SnakeEvent } from "./events";
 
 export class SnakeGame extends Application {
     public readonly board: Board;
@@ -14,15 +15,15 @@ export class SnakeGame extends Application {
     public stepsSinceLastFood = 0;
     public stepsPerFood: number[] = [];
 
-    private readonly events: EventSystem<ApplicationEvent>;
+    public readonly events: EventSystem<SnakeEvent> = new EventSystem();
+
     private readonly updateRate: number;
     private accumulator = 0;
 
-    public constructor(params: SnakeGameParameters, player: Player, events: EventSystem<ApplicationEvent>) {
+    public constructor(params: SnakeGameParameters, player: Player) {
         super();
         
         this.player = player;
-        this.events = events;
 
         this.board = new Board(
             params.board.width,
@@ -48,7 +49,7 @@ export class SnakeGame extends Application {
 
     private step(): void {
         const direction = this.player.getDirection();
-        const head = this.board.getSnake()[0];
+        const head = this.board.getHead();
 
         const newHead: Vector2Int = {
             x: head.x + direction.x,
@@ -56,12 +57,10 @@ export class SnakeGame extends Application {
         };
 
         if (!this.board.isInside(newHead)) {
-            // this.events.notify(ApplicationEvent.Pause);
             return;
         }
 
         if (this.board.isSnake(newHead) && !this.board.isSnakeTail(newHead)) {
-            // this.events.notify(ApplicationEvent.Pause);
             return;
         }
 
@@ -71,6 +70,7 @@ export class SnakeGame extends Application {
         const ateFood = this.board.isFood(newHead);
 
         this.board.moveSnake(newHead, !ateFood);
+        this.events.notify(SnakeEvent.MOVED);
 
         if (ateFood) {
             this.board.newFood();
@@ -78,11 +78,31 @@ export class SnakeGame extends Application {
             this.stepsPerFood.push(this.stepsSinceLastFood);
             this.stepsSinceLastFood = 0;
 
-            // this.events.notify(ApplicationEvent.ATE);
-
-            if (this.board.snakeSize() === this.board.width * this.board.height) {
-                this.events.notify(ApplicationEvent.Pause);
-            }
+            this.events.notify(SnakeEvent.ATE);
         }
+    }
+
+    public isVictory(): boolean {
+        return this.board.snakeSize() === this.board.size;
+    }
+
+    public isDefeat(): boolean {
+        const direction = this.player.getDirection();
+        const head = this.board.getHead();
+
+        const newHead: Vector2Int = {
+            x: head.x + direction.x,
+            y: head.y + direction.y
+        };
+
+        if (!this.board.isInside(newHead)) {
+            return true;
+        }
+
+        if (this.board.isSnake(newHead) && !this.board.isSnakeTail(newHead)) {
+            return true;
+        }
+
+        return false;
     }
 }

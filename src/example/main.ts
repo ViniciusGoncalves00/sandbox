@@ -26,7 +26,7 @@ context
     .init();
 
 Time.lateUpdate.subscribe(event => {
-    renderer2D.update();
     renderer3D.update();
+    renderer2D.update();
     chart.update();
 })
