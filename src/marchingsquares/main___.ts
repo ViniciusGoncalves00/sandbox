@@ -1,4 +1,3 @@
-import { MathUtils, VectorUtils } from "@viniciusgoncalves/ts-utils";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { lerp, randFloat, seededRandom } from "three/src/math/MathUtils.js";
@@ -100,7 +99,7 @@ class MarchingSquare {
             this.gridPoints[x] = [];
 
             for (let y = 0; y < this.cellAmountY + 1; y++) {
-                const density = MathUtils.randomRange(this.lowerValue, this.higherValue);
+                const density = Math.random() * (this.higherValue - this.lowerValue) + this.lowerValue;
                 const point = new Mesh(geometry, material);
 
                 point.position.x = x * this.cellSizeX - halfGridSizeX;

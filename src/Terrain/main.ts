@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { WebGPURenderer } from "three/webgpu";
-import { MathUtils } from "@viniciusgoncalves/ts-utils";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { SelectionContext } from "../common/selection-context";

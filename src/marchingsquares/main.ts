@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import { WebGPURenderer } from "three/webgpu";
 import { Grid } from "./grid";
-import { MathUtils } from "@viniciusgoncalves/ts-utils";
+import { degToRad } from "three/src/math/MathUtils.js";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const scene = new THREE.Scene();
@@ -17,7 +17,7 @@ const camera = new THREE.PerspectiveCamera(
 
 camera.position.z = -5;
 camera.lookAt(0, 0, 0);
-camera.rotateZ(MathUtils.deg2rad(-90));
+camera.rotateZ(degToRad(-90));
 
 const renderer = new WebGPURenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);

@@ -1,8 +1,6 @@
 import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Object3D, Scene, SphereGeometry, Vector3 } from "three";
 import { Node, ControlNode } from "./node";
 import { Square } from "./square";
-import { MathUtils } from "@viniciusgoncalves/ts-utils";
-import { lerp } from "three/src/math/MathUtils.js";
 
 export class Grid {
     public grid: Object3D
@@ -47,14 +45,14 @@ export class Grid {
         
         for (let x = 0; x < this.controlNodes.length; x++) {
             for (let y = 0; y < this.controlNodes[0].length; y++) {
-                this.controlNodes[x][y].density = MathUtils.randomRange(min, max);                
+                this.controlNodes[x][y].density = Math.random() * (max - min) + min;                
             }
         }
 
         
         for (let x = 0; x < this.controlNodes.length; x++) {
             for (let y = 0; y < this.controlNodes[0].length; y++) {
-                this.controlNodes[x][y].density = MathUtils.randomRange(min, max);                
+                this.controlNodes[x][y].density = Math.random() * (max - min) + min;
             }
         }
     }
