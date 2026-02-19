@@ -5,7 +5,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { SelectionContext } from "../common/selection-context";
 import { Handler } from "../handler/handler";
 import { Terrain } from "./terrain";
-import { Selector } from "@viniciusgoncalves/three-toolkit";
+import { Selector } from "../common/selector";
 import type { ISelectable } from "../common/interfaces/ISelectable";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;

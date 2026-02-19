@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { SelectionContext } from "../common/selection-context";
 import { Handler } from "./handler";
 import { camera, canvas, scene } from "../common/default";
-import { Selector } from "@viniciusgoncalves/three-toolkit";
 import type { ISelectable } from "../common/interfaces/ISelectable";
+import { Selector } from "../common/selector";
 
 const geometry = new THREE.BoxGeometry();
 const material = new THREE.MeshPhongMaterial();

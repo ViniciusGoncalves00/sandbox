@@ -1,99 +1,105 @@
-// import { Camera, Object3D, Raycaster, Vector2, type Intersection, type Mesh } from "three";
-// import type { ISelectable } from "./interfaces/ISelectable";
-// import type { SelectionContext } from "./selection-context";
+import { Camera, Object3D, Raycaster, Vector2 } from 'three';
 
-// export class Selector {
-//     public enabled: boolean = true;
-//     public current: ISelectable | null = null;
+export class Selector {
+  public enabled: boolean = true;
 
-//     private context: SelectionContext | null = null;
-//     private previousContext: SelectionContext | null = null;
-//     private readonly raycaster: Raycaster;
+  public readonly selection: Object3D[] = [];
+  private canvas: HTMLCanvasElement;
+  private camera: Camera;
+  private readonly objects: Object3D[];
+  private readonly raycaster: Raycaster;
 
-//     // #region Parameters
-//     public filterVisible: boolean = true;
-//     // #endregion
+  // #region Parameters
+  public filterVisible: boolean = true;
+  public clearSelectionOnSelectNothing: boolean = true;
+  // #endregion
 
-//     // #region Callbacks
-//     private trySelectCallback: (event: PointerEvent) => ISelectable | null;
-//     public onSelectCallbacks: (() => void)[] = [];
-//     public onDeselectCallbacks: (() => void)[] = [];
-//     public onEnterContextCallbacks: (() => void)[] = [];
-//     public onExitContextCallbacks: (() => void)[] = [];
-//     // #endregion
+  // #region Callbacks
+  private trySelectCallback = (event: PointerEvent) => {
+    this.trySelect(event);
+  };
+  public onAddToSelection: ((object: Object3D) => void)[] = [];
+  public onRemoveFromSelection: ((object: Object3D) => void)[] = [];
+  // #endregion
 
-//     public constructor(context: SelectionContext) {
-//         this.raycaster = new Raycaster();
-        
-//         this.trySelectCallback = (event: PointerEvent) => {
-//             if(this.context) {
-//                 return this.trySelect(event, this.context.objects)
-//             }
-//             return null;
-//         };
+  public constructor(canvas: HTMLCanvasElement, camera: Camera, objects: Object3D[] = []) {
+    this.canvas = canvas;
+    this.canvas.addEventListener('pointerdown', this.trySelectCallback);
 
-//         this.context = context;
-//         this.enterContext();
-//     }
+    this.camera = camera;
+    this.objects = objects;
 
-//     public changeContext(context: SelectionContext | null): void {
-//         this.exitContext();
-//         this.previousContext = this.context;
-//         this.context = context;
-//         this.enterContext();
-//     }
+    this.raycaster = new Raycaster();
+  }
 
-//     public restorePreviousContext(): void {
-//         this.changeContext(this.previousContext);
-//     }
+  public setCanvas(canvas: HTMLCanvasElement): Selector {
+    this.canvas.removeEventListener('pointerdown', this.trySelectCallback);
+    this.canvas = canvas;
+    this.canvas.addEventListener('pointerdown', this.trySelectCallback);
+    return this;
+  }
 
-//     public currentContext(): SelectionContext | null {
-//         return this.context;
-//     }
+  public setCamera(camera: Camera): Selector {
+    this.camera = camera;
+    return this;
+  }
 
-//     private enterContext(): void {
-//         this.context?.element.addEventListener("pointerdown", this.trySelectCallback);
-//         for (const callback of this.onEnterContextCallbacks) callback();
-//     }
+  public setObjects(objects: Object3D[]): Selector {
+    this.objects.splice(0);
+    this.objects.push(...objects);
+    return this;
+  }
 
-//     private exitContext(): void {
-//         this.context?.element.removeEventListener("pointerdown", this.trySelectCallback);
-//         for (const callback of this.onExitContextCallbacks) callback();
-//     }
+  public setContext(canvas: HTMLCanvasElement, camera: Camera, objects: Object3D[]): Selector {
+    return this.setCanvas(canvas).setCamera(camera).setObjects(objects);
+  }
 
-//     private trySelect(event: PointerEvent, objects: Object3D[]): ISelectable | null {
-//         if(!this.enabled || !this.context) return null;
+  public addObjects(...objects: Object3D[]): Selector {
+    this.objects.push(...objects);
+    return this;
+  }
 
-//         if(objects.length === 0) return this.deselect();
+  public addToSelection(object: Object3D): Selector {
+    if (this.selection.some((object) => object.uuid === object.uuid)) return this;
 
-//         const coordinates = this.normalizeCoordinates(event);
-//         this.raycaster.setFromCamera(coordinates, this.context.camera);
+    this.selection.push(object);
+    for (const callback of this.onAddToSelection) callback(object);
+    return this;
+  }
 
-//         const filtered = this.filterVisible ? objects.filter(obj => obj.visible) : objects;
-//         const intersections = this.raycaster.intersectObjects(filtered);
-//         if(intersections.length === 0) return this.deselect();
-        
-//         return this.select(intersections);
-//     }
+  public removeFromSelection(object: Object3D): Selector {
+    const index = this.selection.findIndex((object) => object.uuid === object.uuid);
+    if (index === -1) return this;
 
-//     private normalizeCoordinates(event: PointerEvent): Vector2 {
-//         if(!this.context) return new Vector2();
+    this.selection.push(object);
+    for (const callback of this.onRemoveFromSelection) callback(object);
+    return this;
+  }
 
-//         const rect = this.context.element.getBoundingClientRect();
-//         const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-//         const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-//         return new Vector2(x, y);
-//     }
+  public clearSelection(): Selector {
+    this.selection.forEach((object) => this.removeFromSelection(object));
+    return this;
+  }
 
-//     private select(intersections: Intersection<Object3D>[]): ISelectable {
-//         const object = intersections[0].object;
-//         this.current = (object as unknown) as ISelectable;
-//         for (const callback of this.onSelectCallbacks) callback();
-//         return this.current;
-//     }
-//     private deselect(): null {
-//         this.current = null;
-//         for (const callback of this.onDeselectCallbacks) callback();
-//         return null;
-//     }
-// }
+  private trySelect(event: PointerEvent): Object3D | null {
+    if (!this.enabled || this.objects.length === 0) return null;
+
+    const rect = this.canvas.getBoundingClientRect();
+	const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+	const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    const coordinates = new Vector2(x, y);
+    this.raycaster.setFromCamera(coordinates, this.camera);
+
+    const objs = this.filterVisible ? this.objects.filter((obj) => obj.visible) : this.objects;
+    const intersections = this.raycaster.intersectObjects(objs);
+
+    if (intersections.length === 0) {
+      if (this.clearSelectionOnSelectNothing) this.clearSelection();
+      return null;
+    }
+
+    this.addToSelection(intersections[0].object);
+    return intersections[0].object;
+  }
+}

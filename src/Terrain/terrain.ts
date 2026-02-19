@@ -2,7 +2,7 @@ import { ArrowHelper, BufferAttribute, BufferGeometry, Color, ConeGeometry, Doub
 import { lerp, seededRandom } from "three/src/math/MathUtils.js";
 import { ControlNode } from "./node";
 import { Square } from "./square";
-import { Selector } from "@viniciusgoncalves/three-toolkit";
+import { Selector } from "../common/selector";
 // import type { Selector } from "../common/selector";
 
 export class Terrain {

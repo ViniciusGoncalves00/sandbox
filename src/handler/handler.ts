@@ -6,7 +6,7 @@ import type { ISelectable } from "../common/interfaces/ISelectable";
 import { DEFAULT_HANDLER_PARAMETERS, type HandlerParameters } from "./handler-parameters";
 import { Axis, Space, Transformation } from "./enums";
 import { HandlerComponent } from "./handler-component";
-import type { Selector } from "@viniciusgoncalves/three-toolkit";
+import { Selector } from "../common/selector";
 
 
 export class Handler {
