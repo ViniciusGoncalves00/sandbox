@@ -5,7 +5,7 @@ import CopyPlugin from "copy-webpack-plugin";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BASE_PATH = "/sandbox/";
+const BASE_PATH = "/";
 
 export default {
   mode: "production",
@@ -42,7 +42,7 @@ export default {
       patterns: [
         {
           from: "src",
-          to: "sandbox",
+          to: "",
           globOptions: {
             ignore: ["**/*.ts"],
           },
