@@ -5,6 +5,8 @@ import CopyPlugin from "copy-webpack-plugin";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const BASE_PATH = "/sandbox/";
+
 export default {
   mode: "production",
 
@@ -13,14 +15,14 @@ export default {
   output: {
     filename: "main.js",
     path: path.resolve(__dirname, "dist"),
-    publicPath: "./",
+    publicPath: BASE_PATH,
     clean: true,
   },
 
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.ts$/,
         use: "ts-loader",
         exclude: /node_modules/,
       },
@@ -38,14 +40,23 @@ export default {
   plugins: [
     new CopyPlugin({
       patterns: [
-        { from: "src", to: "." },
+        {
+          from: "src",
+          to: "sandbox",
+          globOptions: {
+            ignore: ["**/*.ts"],
+          },
+        },
       ],
     }),
   ],
 
   devServer: {
-    static: "./src",
+    static: {
+      directory: path.resolve(__dirname, "dist"),
+      publicPath: BASE_PATH,
+    },
     port: 3000,
-    open: true,
+    open: [BASE_PATH],
   },
 };
