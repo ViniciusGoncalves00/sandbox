@@ -10,7 +10,14 @@ const BASE_PATH = "/";
 export default {
   mode: "production",
 
-  entry: "./src/main.ts",
+  entry: {
+    snake: "./src/example/main.ts",
+    fluids: "./src/fluids/main.ts",
+    fluids: "./src/handler/main.ts",
+    fluids: "./src/marchinsquares/main.ts",
+    fluids: "./src/fluids/main.ts",
+    fluids: "./src/fluids/main.ts",
+  },
 
   output: {
     filename: "main.js",
@@ -40,13 +47,7 @@ export default {
   plugins: [
     new CopyPlugin({
       patterns: [
-        {
-          from: "src",
-          to: "",
-          globOptions: {
-            ignore: ["**/*.ts"],
-          },
-        },
+        { from: "src", to: "", globOptions: { ignore: ["**/*.ts"] } },
       ],
     }),
   ],

@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "webpack --mode production"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "Vinicius Gonçalves",
@@ -14,16 +15,12 @@
     "@tailwindcss/cli": "^4.1.16",
     "chart.js": "^4.5.1",
     "tailwindcss": "^4.1.16",
-    "three": "^0.180.0",
-    "webpack": "^5.102.1"
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
-    "copy-webpack-plugin": "^13.0.1",
-    "html-webpack-plugin": "^5.6.4",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
-    "webpack-cli": "^6.0.1"
+    "vite": "^7.1.12"
   }
 }
