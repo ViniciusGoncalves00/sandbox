@@ -6,11 +6,15 @@ function getEntries() {
   const base = path.resolve(__dirname, "src");
   const entries = {};
 
+  if (fs.existsSync(path.join(base, "index.html"))) {
+    entries["index"] = path.join(base, "index.html");
+  }
   for (const dir of fs.readdirSync(base)) {
     const indexPath = path.join(base, dir, "index.html");
     if (fs.existsSync(indexPath)) {
       entries[dir] = indexPath;
     }
+    
   }
 
   return entries;
