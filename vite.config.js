@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 
 function getEntries() {
-  const base = path.resolve(__dirname);
+  const base = path.resolve(__dirname, "src");
   const entries = {};
 
   for (const dir of fs.readdirSync(base)) {
@@ -18,8 +18,12 @@ function getEntries() {
 
 export default defineConfig({
   base: "/sandbox/",
+  root: "src",
+
   build: {
     outDir: "../dist",
+    emptyOutDir: true,
+
     rollupOptions: {
       input: getEntries(),
     },
