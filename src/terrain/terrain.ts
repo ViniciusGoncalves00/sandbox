@@ -83,6 +83,7 @@ export class Terrain {
                 this.randomizeDirection(node);
             }
         }
+        this.updateMesh();
     }
 
     public updateNodeDirection(uuid: string): void {
@@ -164,10 +165,15 @@ export class Terrain {
         const attribute = new BufferAttribute(new Float32Array(array), 3);
         const buffer = new BufferGeometry().setAttribute("position", attribute);
         buffer.computeVertexNormals();
-        const material = new MeshBasicMaterial({ color: new Color("green"), side: DoubleSide, wireframe: true});
+        const material = new MeshBasicMaterial({ color: new Color("#eee"), side: DoubleSide, wireframe: false});
+        const wireframeMaterial = new MeshBasicMaterial({ color: new Color("#666"), side: DoubleSide, wireframe: true});
         const mesh = new Mesh(buffer, material);
+        const wireframeMesh = new Mesh(buffer, wireframeMaterial);
+        mesh.renderOrder = 0;
+        wireframeMesh.renderOrder = 1;
         this.mesh.add(mesh);
-    } 
+        this.mesh.add(wireframeMesh);
+    }
 
     private updateVerticesHeight(): void {
         for (let x = 0; x < this.controlGrid.length; x++) {

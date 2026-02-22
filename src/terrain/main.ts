@@ -10,7 +10,7 @@ import type { ISelectable } from "../common/interfaces/ISelectable";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0, 0, 0);
+scene.background = new THREE.Color(0.9, 0.9, 0.9);
 
 const camera = new THREE.PerspectiveCamera(
     75,
